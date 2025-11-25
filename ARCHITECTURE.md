@@ -60,6 +60,8 @@ This document defines the modular, extensible architecture for MIKRO-DOJO, built
 
 ## Core Open-Source Foundations
 
+> **Note**: All package selections were verified as of November 2025 through PyPI, GitHub releases, and official documentation. See [Technology Decision Sources](#technology-decision-sources) at the end of this document.
+
 ### 1. Robot Framework: ROS 2
 
 **Why ROS 2?**
@@ -69,7 +71,18 @@ This document defines the modular, extensible architecture for MIKRO-DOJO, built
 - Extensive package ecosystem
 - Native Python and C++ support
 
-**Distribution**: ROS 2 Jazzy Jalisco (Ubuntu 24.04) or Iron Irwini (Ubuntu 22.04)
+**Distribution Options**:
+- **ROS 2 Jazzy Jalisco** (May 2024) - **Recommended for Stability**
+  - LTS release, supported until May 2029
+  - Ubuntu 24.04 (Noble) support
+  - Mature ecosystem, extensive package availability
+
+- **ROS 2 Kilted Kaiju** (May 2025) - **Recommended for Latest Features**
+  - Newest release with cutting-edge features
+  - Zenoh middleware support (more efficient, secure alternative to DDS)
+  - Native OpenCV 4.12 support (no cv_bridge patches needed)
+  - Enhanced ROSBag2 with IPC and thread priority control
+  - Gazebo Ionic integration
 
 ```yaml
 ros2_packages:
@@ -97,25 +110,46 @@ ros2_packages:
 
 ### 2. Robot Learning: LeRobot (Hugging Face)
 
+**Version**: v0.4.0 (2025) | **Status**: Production-ready, very actively developed | **License**: Apache 2.0
+
 **Why LeRobot?**
 - Purpose-built for robot learning from demonstrations
-- Supports imitation learning and RL
-- Pre-built dataset formats
-- Model hub integration
-- Active development by Hugging Face
+- Supports imitation learning, behavior cloning, and RL
+- LeRobotDataset v3.0 format for large-scale datasets
+- Hugging Face Hub integration for model sharing
+- **Official NVIDIA collaboration**: Integrates with Isaac Lab for sim-to-real workflows
+- **New plugin system**: Third-party hardware integrates via simple `pip install`
+- 12,000+ GitHub stars with rapid community growth
+
+**Key Features in v0.4.0**:
+- **Vision-Language-Action (VLA) Models**: PI0, PI0.5, GR00T N1.5, SmolVLA
+- **Benchmarks**: LIBERO (130+ tasks), Meta-World (50+ manipulation tasks)
+- **Hardware Support**: ALOHA, SO-101 arm, Reachy Mini, HopeJR humanoids
 
 ```yaml
 lerobot_components:
-  - lerobot.common.datasets     # Dataset management
-  - lerobot.common.policies     # Policy implementations
-  - lerobot.common.robot_devices # Hardware interfaces
-  - lerobot.scripts.train       # Training pipelines
+  core:
+    - lerobot.common.datasets       # Dataset management (v3.0 format)
+    - lerobot.common.policies       # Policy implementations (Diffusion, ACT, VLA)
+    - lerobot.common.robot_devices  # Hardware interfaces
+    - lerobot.scripts.train         # Training pipelines
+
+  vla_models:
+    - pi0                           # Physical Intelligence base model
+    - pi0.5                         # Enhanced open-world generalization
+    - gr00t-n1.5                    # NVIDIA GR00T foundation model
+    - smolvla                       # Lightweight VLA
+
+  installation:
+    base: pip install lerobot
+    with_pi: pip install "lerobot[pi]@git+https://github.com/huggingface/lerobot.git"
 ```
 
 **Integration Points**:
 - Use LeRobot's dataset format for demonstrations
 - Extend LeRobot policies for MIKRO-DOJO skills
-- Leverage their replay buffer implementations
+- Leverage VLA models for complex skill learning
+- Connect to Isaac Lab for synthetic data generation
 
 ### 3. Vision & Perception
 
@@ -143,38 +177,113 @@ perception_stack:
 ```yaml
 ml_framework:
   core:
-    - pytorch >= 2.0         # Primary ML framework
+    - pytorch >= 2.3         # Primary ML framework (required for SB3 2.7+)
     - torchvision            # Vision models
     - torchaudio             # Audio (future)
 
   reinforcement_learning:
-    - stable-baselines3      # RL algorithms (PPO, SAC)
-    - gymnasium              # Environment interface
-    - tianshou               # Alternative RL library
+    # Stable-Baselines3 v2.7.0 (Jul 2025) - Production/Stable, actively maintained
+    # Provides reliable implementations of PPO, SAC, A2C, DQN, TD3, and more
+    - stable-baselines3 >= 2.7.0
+    - sb3-contrib            # Additional algorithms (TQC, QRDQN, etc.)
+
+    # Gymnasium v1.2.2 (Nov 2025) - Production/Stable
+    # Official successor to OpenAI Gym, maintained by Farama Foundation
+    # Supports Python 3.10-3.13, actively developed with regular releases
+    - gymnasium >= 1.0.0
+
+    - tianshou               # Alternative RL library (if needed)
 
   imitation_learning:
     - imitation              # IL algorithms
     - d3rlpy                 # Offline RL
+
+  diffusion_policy:
+    # Diffusion Policy is a watershed approach for dexterous manipulation
+    # Integrated into LeRobot, handles multi-modal action distributions
+    - diffusers              # Hugging Face diffusion library
+    - einops                 # Tensor operations for transformers
 
   transformers:
     - transformers           # Hugging Face models
     - accelerate             # Distributed training
 ```
 
-### 5. Vision-Language Models (VLM)
+### 4.1 Simulation & Synthetic Data: NVIDIA Isaac Lab
+
+**Why Isaac Lab?** (Complements LeRobot - Official Collaboration)
+- GPU-accelerated physics simulation built on NVIDIA Isaac Sim
+- High-fidelity sensor simulation for sim-to-real transfer
+- Native integration with LeRobot dataset format
+- GR00T-Mimic blueprints for synthetic motion generation
+- Official collaboration between NVIDIA and Hugging Face
+
+```yaml
+isaac_lab_stack:
+  simulation:
+    - isaac-sim              # NVIDIA Isaac Sim (Omniverse-based)
+    - isaac-lab              # Robot learning framework on Isaac Sim
+    - physx                  # GPU-accelerated physics
+
+  synthetic_data:
+    - gr00t-mimic            # Synthetic manipulation motion generation
+    - gr00t-dreams           # Large-scale synthetic dataset generation
+
+  integration:
+    - Collect data via teleoperation OR Isaac Lab simulation
+    - Store in LeRobotDataset v3.0 format
+    - Train policies in LeRobot
+    - Validate in Isaac Lab simulation
+    - Deploy on real robots via NVIDIA Jetson
+```
+
+### 5. Vision-Language Models (VLM) & Vision-Language-Action (VLA)
+
+**2025 Landscape**: VLAs have emerged as the dominant paradigm for robot learning, unifying vision, language, and action in single models.
 
 ```yaml
 vlm_options:
-  open_source:
+  # For evaluation and scene understanding
+  open_source_vlm:
     - llava-next             # LLaVA 1.6+ (Apache 2.0)
-    - qwen-vl                # Qwen-VL (open weights)
-    - cogvlm                 # CogVLM (Apache 2.0)
-    - moondream              # Lightweight VLM
+    - qwen-vl-2              # Qwen-VL 2 (open weights, strong performance)
+    - cogvlm-2               # CogVLM 2 (Apache 2.0)
+    - moondream              # Lightweight VLM for edge
 
-  integration:
-    - vllm                   # Fast inference server
-    - ollama                 # Local model serving
+  # Vision-Language-Action models for end-to-end control
+  vla_models:
+    # Physical Intelligence PI0 (open-sourced 2025)
+    # Built on PaliGemma (~3B params), 50Hz action output
+    # Fine-tunable with 1-20 hours of task-specific data
+    - openpi/pi0             # Base model (Apache 2.0)
+    - openpi/pi0-fast        # Autoregressive variant (better language following)
+    - openpi/pi0.5           # Enhanced open-world generalization
+
+    # NVIDIA GR00T (integrated into LeRobot)
+    - gr00t-n1.5-3b          # NVIDIA foundation model for humanoids
+
+    # Lightweight options
+    - smolvla                # Compact VLA for resource-constrained deployment
+
+  inference_serving:
+    - vllm                   # Fast inference server (GPU)
+    - ollama                 # Local model serving (easy setup)
     - litellm                # Unified API wrapper
+    - tensorrt-llm           # NVIDIA optimized inference
+```
+
+**PI0 Integration** (via openpi repository):
+```python
+# Example: Fine-tuning PI0 for MIKRO-DOJO skills
+# Requires 1-20 hours of demonstration data per task
+from openpi import Pi0Policy
+
+policy = Pi0Policy.from_pretrained("physical-intelligence/pi0")
+policy.finetune(
+    dataset="mikro-dojo/drift-skill",
+    epochs=100,
+    learning_rate=1e-5
+)
 ```
 
 ### 6. Edge Deployment
@@ -838,18 +947,21 @@ mikro-dojo/
 
 ## Technology Stack Summary
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Robot Framework** | ROS 2 Jazzy | Communication, multi-robot support |
-| **Learning** | LeRobot + PyTorch | Imitation learning, policies |
-| **RL** | Stable-Baselines3 | Reinforcement learning |
-| **VLM** | LLaVA / Qwen-VL + Ollama | Skill evaluation |
-| **Perception** | OpenCV + Kalibr | Vision processing |
-| **Edge Runtime** | TensorRT + Isaac ROS | Jetson deployment |
-| **Data** | Arrow + DVC + MLflow | Data pipeline |
-| **API** | FastAPI + WebSocket | External interfaces |
-| **Kids Tools** | Scratch 3.0 + Blockly | Visual programming |
-| **Visualization** | Foxglove + Grafana | Monitoring |
+| Layer | Technology | Version (Nov 2025) | Purpose |
+|-------|------------|-------------------|---------|
+| **Robot Framework** | ROS 2 Jazzy/Kilted | Jazzy LTS or Kilted (May '25) | Communication, multi-robot support |
+| **Robot Learning** | LeRobot | v0.4.0 | Imitation learning, VLA policies, datasets |
+| **Simulation** | NVIDIA Isaac Lab | Current | GPU-accelerated sim, synthetic data |
+| **RL** | Stable-Baselines3 | v2.7.0 | PPO, SAC, TD3 algorithms |
+| **RL Environments** | Gymnasium | v1.2.2 | Standard RL environment interface |
+| **VLA Models** | PI0 / GR00T N1.5 | Open-sourced 2025 | End-to-end vision-language-action |
+| **VLM Evaluation** | Qwen-VL-2 + Ollama | Current | Skill evaluation, scene understanding |
+| **Perception** | OpenCV + Kalibr | OpenCV 4.x | Vision processing, calibration |
+| **Edge Runtime** | TensorRT + Isaac ROS | JetPack 6.x | Jetson deployment |
+| **Data** | Arrow + DVC + MLflow | Current | Data pipeline, versioning |
+| **API** | FastAPI + WebSocket | Current | External interfaces |
+| **Kids Tools** | Scratch 3.0 + Blockly | Current | Visual programming |
+| **Visualization** | Foxglove + Grafana | Current | Monitoring |
 
 ---
 
@@ -907,3 +1019,59 @@ mikro-dojo/
 3. **Create ROS 2 workspace** with message definitions
 4. **Build multi-camera capture** node
 5. **Integrate LeRobot** dataset format
+
+---
+
+## Technology Decision Sources
+
+> This section documents the research sources used to validate technology choices. Last verified: November 2025.
+
+### Package Verification
+
+| Package | Version | Status | Source |
+|---------|---------|--------|--------|
+| **Gymnasium** | 1.2.2 (Nov 2025) | Production/Stable | [PyPI](https://pypi.org/project/gymnasium/), [GitHub](https://github.com/Farama-Foundation/Gymnasium) |
+| **Stable-Baselines3** | 2.7.0 (Jul 2025) | Actively maintained | [PyPI](https://pypi.org/project/stable-baselines3/), [Docs](https://stable-baselines3.readthedocs.io/) |
+| **LeRobot** | 0.4.0 (2025) | Actively maintained | [GitHub](https://github.com/huggingface/lerobot), [HF Blog](https://huggingface.co/blog/lerobot-release-v040) |
+| **ROS 2 Jazzy** | Patch 6 (Aug 2025) | LTS until May 2029 | [ROS Docs](https://docs.ros.org/en/jazzy/Releases/Release-Jazzy-Jalisco.html) |
+| **ROS 2 Kilted** | May 2025 | Latest release | [ROS Docs](https://docs.ros.org/en/kilted/Releases/Release-Kilted-Kaiju.html) |
+| **PI0/openpi** | 2025 | Open-sourced | [GitHub](https://github.com/Physical-Intelligence/openpi), [Blog](https://www.physicalintelligence.company/blog/openpi) |
+| **NVIDIA Isaac Lab** | Current | Actively developed | [GitHub](https://github.com/isaac-sim/IsaacLab), [NVIDIA](https://developer.nvidia.com/isaac/lab) |
+
+### Key Research References
+
+1. **Gymnasium**: Official successor to OpenAI Gym, maintained by Farama Foundation. Academic paper: [arXiv:2407.17032](https://arxiv.org/abs/2407.17032)
+
+2. **LeRobot + NVIDIA Collaboration**: Announced at CoRL 2024, enables seamless workflow between Isaac Lab simulation and LeRobot training. [NVIDIA Blog](https://blogs.nvidia.com/blog/hugging-face-lerobot-open-source-robotics/)
+
+3. **PI0 Foundation Model**: Physical Intelligence's open-source VLA model, built on PaliGemma (~3B params) with 300M action expert. Fine-tunable with 1-20 hours of data. [HF Blog](https://huggingface.co/blog/pi0)
+
+4. **Diffusion Policy**: Watershed result for dexterous manipulation, integrated into LeRobot. [Survey](https://www.frontiersin.org/journals/robotics-and-ai/articles/10.3389/frobt.2025.1606247/full)
+
+5. **ROS 2 Kilted Features**: Zenoh middleware, OpenCV 4.12 native support, enhanced ROSBag2. [Robot Report](https://www.therobotreport.com/kilted-kaiju-ros-2-release-details/)
+
+### Decision Rationale
+
+**Why Gymnasium over OpenAI Gym?**
+- OpenAI Gym is deprecated (no updates since 2022)
+- Gymnasium is the official continuation by the original maintainers
+- Production stable with Python 3.10-3.13 support
+- Regular releases throughout 2024-2025
+
+**Why LeRobot over custom implementation?**
+- Purpose-built for robot learning with modern VLA support
+- Official NVIDIA collaboration for sim-to-real workflows
+- Standardized dataset format (LeRobotDataset v3.0)
+- Active community with 12K+ GitHub stars
+- Plugin system for easy hardware integration
+
+**Why include NVIDIA Isaac Lab?**
+- Complements LeRobot (not a replacement)
+- GPU-accelerated physics for realistic simulation
+- Synthetic data generation via GR00T-Mimic
+- Official workflow: Isaac Lab → LeRobot → Jetson deployment
+
+**Why ROS 2 Jazzy LTS as default?**
+- 5-year support window (until May 2029)
+- Stable, battle-tested ecosystem
+- Kilted (May 2025) available for teams wanting Zenoh/latest features
