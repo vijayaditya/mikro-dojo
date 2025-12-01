@@ -3054,21 +3054,21 @@ class IBookshelf(ABC):
 | Door Type | Magnetic glass |
 | Reading Stand | Pop-out holder |
 
-**Pre-loaded Book Collection**:
-| Slot | Title | Genre |
-|------|-------|-------|
-| 1 | "RC Car Adventures" | Adventure |
-| 2 | "The Flying Machine" | Science |
-| 3 | "Robot Friends" | Comedy |
-| 4 | "Mystery of the Garage" | Mystery |
-| 5 | "Super Car Comics #1" | Comics |
-| 6 | "Dragon Racers" | Fantasy |
-| 7 | "How Engines Work" | Science |
-| 8 | "Funny Car Jokes" | Comedy |
-| 9 | "Detective Wheels" | Mystery |
-| 10 | "Space Car Adventures" | Adventure |
-| 11 | "Hero Bot Comics #1" | Comics |
-| 12 | "The Magic Speedway" | Fantasy |
+**Pre-loaded Book Collection** (ALL DOG MAN!):
+| Slot | Title | Author |
+|------|-------|--------|
+| 1 | "Dog Man" | Dav Pilkey |
+| 2 | "Dog Man Unleashed" | Dav Pilkey |
+| 3 | "Dog Man: A Tale of Two Kitties" | Dav Pilkey |
+| 4 | "Dog Man and Cat Kid" | Dav Pilkey |
+| 5 | "Dog Man: Lord of the Fleas" | Dav Pilkey |
+| 6 | "Dog Man: Brawl of the Wild" | Dav Pilkey |
+| 7 | "Dog Man: For Whom the Ball Rolls" | Dav Pilkey |
+| 8 | "Dog Man: Fetch-22" | Dav Pilkey |
+| 9 | "Dog Man: Grime and Punishment" | Dav Pilkey |
+| 10 | "Dog Man: Mothering Heights" | Dav Pilkey |
+| 11 | "Dog Man: Twenty Thousand Fleas Under the Sea" | Dav Pilkey |
+| 12 | "Dog Man: The Scarlet Shedder" | Dav Pilkey |
 
 **Voice Commands for Bookshelf**:
 - "Open bookshelf" - Open the glass door
@@ -3102,19 +3102,19 @@ bookshelf:
   reading_stand:
     pop_out: true
     adjustable_angle: true
-  books:
-    slot_1: { title: "RC Car Adventures", genre: adventure }
-    slot_2: { title: "The Flying Machine", genre: science }
-    slot_3: { title: "Robot Friends", genre: comedy }
-    slot_4: { title: "Mystery of the Garage", genre: mystery }
-    slot_5: { title: "Super Car Comics #1", genre: comics }
-    slot_6: { title: "Dragon Racers", genre: fantasy }
-    slot_7: { title: "How Engines Work", genre: science }
-    slot_8: { title: "Funny Car Jokes", genre: comedy }
-    slot_9: { title: "Detective Wheels", genre: mystery }
-    slot_10: { title: "Space Car Adventures", genre: adventure }
-    slot_11: { title: "Hero Bot Comics #1", genre: comics }
-    slot_12: { title: "The Magic Speedway", genre: fantasy }
+  books:  # ALL DOG MAN by Dav Pilkey!
+    slot_1: { title: "Dog Man", author: "Dav Pilkey" }
+    slot_2: { title: "Dog Man Unleashed", author: "Dav Pilkey" }
+    slot_3: { title: "Dog Man: A Tale of Two Kitties", author: "Dav Pilkey" }
+    slot_4: { title: "Dog Man and Cat Kid", author: "Dav Pilkey" }
+    slot_5: { title: "Dog Man: Lord of the Fleas", author: "Dav Pilkey" }
+    slot_6: { title: "Dog Man: Brawl of the Wild", author: "Dav Pilkey" }
+    slot_7: { title: "Dog Man: For Whom the Ball Rolls", author: "Dav Pilkey" }
+    slot_8: { title: "Dog Man: Fetch-22", author: "Dav Pilkey" }
+    slot_9: { title: "Dog Man: Grime and Punishment", author: "Dav Pilkey" }
+    slot_10: { title: "Dog Man: Mothering Heights", author: "Dav Pilkey" }
+    slot_11: { title: "Dog Man: Twenty Thousand Fleas Under the Sea", author: "Dav Pilkey" }
+    slot_12: { title: "Dog Man: The Scarlet Shedder", author: "Dav Pilkey" }
   ai_recommendations: true
 ```
 
