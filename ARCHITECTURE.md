@@ -364,6 +364,7 @@ class MikroCarrier(IVehicle):
         "icee_machine",            # Frozen ICEE slushie dispenser!
         "tv_screen",               # TV screen above the ICEE machine!
         "bookshelf",               # Mini bookshelf for reading on the go!
+        "nintendo_switch_2",       # Nintendo Switch 2 gaming console!
     ]
 ```
 
@@ -398,6 +399,7 @@ class MikroCarrier(IVehicle):
 | ICEE Machine | Frozen slushie drinks! |
 | TV Screen | Watch shows above the ICEE machine! |
 | Bookshelf | Mini library with 12 books! |
+| Nintendo Switch 2 | Gaming console with dock! |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -776,7 +778,8 @@ mikro_dojo/
         ├── controller_ai.py       # AI assistant on the controller
         ├── icee_machine.py        # Frozen ICEE slushie dispenser
         ├── tv_screen.py           # TV screen above ICEE machine
-        └── bookshelf.py           # Mini bookshelf with 12 books
+        ├── bookshelf.py           # Mini bookshelf with 12 books
+        └── nintendo_switch_2.py   # Nintendo Switch 2 gaming console
 ```
 
 **Plane Launcher Interface**:
@@ -3131,6 +3134,207 @@ bookshelf:
 
     Grab an ICEE, pick a book,
     and enjoy! 📖🧊
+```
+
+---
+
+**Nintendo Switch 2 System**:
+A built-in Nintendo Switch 2 gaming console with dock - play games on the TV or handheld!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class SwitchMode(Enum):
+    DOCKED = "docked"              # Playing on TV screen
+    HANDHELD = "handheld"          # Portable mode
+    TABLETOP = "tabletop"          # Kickstand mode
+    CHARGING = "charging"          # Charging in dock
+
+class GameCategory(Enum):
+    RACING = "racing"              # Mario Kart, etc.
+    ADVENTURE = "adventure"        # Zelda, Mario, etc.
+    SPORTS = "sports"              # Sports games
+    PARTY = "party"                # Multiplayer party games
+    PUZZLE = "puzzle"              # Brain teasers
+    ACTION = "action"              # Action games
+
+@dataclass
+class Game:
+    title: str                     # Game title
+    category: GameCategory         # Game type
+    players: int                   # Max players
+    installed: bool                # Is it installed?
+
+@dataclass
+class SwitchStatus:
+    mode: SwitchMode               # Current mode
+    battery_percent: int           # Battery level (0-100)
+    current_game: str | None       # Currently playing
+    controllers_connected: int     # Joy-Cons connected
+    online: bool                   # Connected to internet?
+    storage_used_gb: float         # Storage used
+
+class INintendoSwitch2(ABC):
+    """Interface for Nintendo Switch 2 gaming system"""
+
+    @abstractmethod
+    def dock(self) -> bool:
+        """Dock the Switch to play on TV"""
+        ...
+
+    @abstractmethod
+    def undock(self) -> bool:
+        """Remove Switch for handheld mode"""
+        ...
+
+    @abstractmethod
+    def launch_game(self, game: str) -> bool:
+        """Start a game"""
+        ...
+
+    @abstractmethod
+    def exit_game(self) -> None:
+        """Exit current game"""
+        ...
+
+    @abstractmethod
+    def get_games(self) -> list[Game]:
+        """List installed games"""
+        ...
+
+    @abstractmethod
+    def connect_controller(self, controller_id: int) -> bool:
+        """Connect a Joy-Con or Pro Controller"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> SwitchStatus:
+        """Get Switch status"""
+        ...
+
+    @abstractmethod
+    def take_screenshot(self) -> bool:
+        """Capture gameplay screenshot"""
+        ...
+
+    @abstractmethod
+    def start_multiplayer(self, players: int) -> bool:
+        """Start local multiplayer"""
+        ...
+```
+
+**Nintendo Switch 2 Hardware**:
+- **Console**: Nintendo Switch 2 (next-gen!)
+- **Dock Location**: Built into dashboard compartment
+- **Display**: 8-inch OLED (handheld mode)
+- **TV Output**: Connects to vehicle's 7" TV screen
+- **Controllers**: 2 Joy-Cons included + Pro Controller slot
+- **Storage**: 256GB internal + SD card slot
+- **Charging**: Auto-charge when docked
+- **Multiplayer**: Up to 4 players local
+
+**Nintendo Switch 2 Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Console | Nintendo Switch 2 |
+| Screen (Handheld) | 8" OLED |
+| TV Output | 1080p to vehicle TV |
+| Storage | 256GB + SD card |
+| Controllers | 2 Joy-Cons + Pro slot |
+| Battery Life | 6 hours handheld |
+| Max Players | 4 local |
+| Online | WiFi enabled |
+
+**Pre-installed Games**:
+| Game | Category | Players |
+|------|----------|---------|
+| Mario Kart 9 | Racing | 1-4 |
+| Super Mario Odyssey 2 | Adventure | 1-2 |
+| The Legend of Zelda | Adventure | 1 |
+| Super Smash Bros Ultimate 2 | Action | 1-4 |
+| Nintendo Switch Sports | Sports | 1-4 |
+| Mario Party Superstars 2 | Party | 1-4 |
+| Tetris 99 | Puzzle | 1 |
+| Splatoon 4 | Action | 1-4 |
+| Animal Crossing 2 | Adventure | 1-4 |
+| Kirby's Dream World | Adventure | 1-2 |
+
+**Play Modes**:
+| Mode | Description | Best For |
+|------|-------------|----------|
+| Docked | Play on vehicle's TV | Best graphics, multiplayer |
+| Handheld | Take Switch with you | Portable gaming |
+| Tabletop | Kickstand + Joy-Cons | Quick multiplayer anywhere |
+
+**Voice Commands for Nintendo Switch 2**:
+- "Play Switch" / "Gaming time" - Turn on Switch
+- "Dock the Switch" - Connect to TV
+- "Undock Switch" - Handheld mode
+- "Play Mario Kart" - Launch specific game
+- "Exit game" - Close current game
+- "What games do I have?" - List games
+- "Multiplayer mode" - Set up local multiplayer
+- "Switch battery" - Check battery level
+- "Connect controller" - Pair Joy-Con
+- "Take screenshot" - Capture gameplay
+
+**Nintendo Switch 2 Configuration**:
+```yaml
+nintendo_switch_2:
+  enabled: true
+  dock_location: dashboard_compartment
+  display:
+    handheld_size_inches: 8
+    handheld_type: OLED
+    tv_output_resolution: 1080p
+    tv_target: vehicle_tv_screen
+  storage:
+    internal_gb: 256
+    sd_card_slot: true
+  controllers:
+    joy_cons: 2
+    pro_controller_slot: true
+    max_controllers: 4
+  battery:
+    capacity_hours: 6
+    auto_charge_when_docked: true
+  games:
+    - { title: "Mario Kart 9", category: racing, players: 4 }
+    - { title: "Super Mario Odyssey 2", category: adventure, players: 2 }
+    - { title: "The Legend of Zelda", category: adventure, players: 1 }
+    - { title: "Super Smash Bros Ultimate 2", category: action, players: 4 }
+    - { title: "Nintendo Switch Sports", category: sports, players: 4 }
+    - { title: "Mario Party Superstars 2", category: party, players: 4 }
+    - { title: "Tetris 99", category: puzzle, players: 1 }
+    - { title: "Splatoon 4", category: action, players: 4 }
+    - { title: "Animal Crossing 2", category: adventure, players: 4 }
+    - { title: "Kirby's Dream World", category: adventure, players: 2 }
+  online:
+    wifi_enabled: true
+    nintendo_online: true
+  parental_controls:
+    enabled: false
+    playtime_limit: null
+```
+
+**Gaming Setup**:
+```
+    ┌─────────────────────────────────┐
+    │         📺 TV SCREEN            │
+    │    ┌─────────────────────┐      │
+    │    │   🎮 MARIO KART 9   │      │
+    │    │      Playing...     │      │
+    │    └─────────────────────┘      │
+    ├─────────────────────────────────┤
+    │  🎮 SWITCH DOCK                 │
+    │  [====NINTENDO SWITCH 2====]    │
+    │     🔴🔵 Joy-Cons Ready         │
+    └─────────────────────────────────┘
+
+    Play on the big screen or grab
+    the Switch and play anywhere! 🎮
 ```
 
 ---
