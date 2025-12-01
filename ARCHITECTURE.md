@@ -356,6 +356,10 @@ class MikroCarrier(IVehicle):
         "robot_bodyguards",        # 2 mini humanoid robot bodyguards!
         "candy_dispenser",         # 100 pieces, multiple candy types!
         "speaker_system",          # Play music, sounds, announcements!
+        "earpod_case",             # Store and charge wireless earbuds!
+        "toilet_feature",          # Mini toilet for emergencies!
+        "atm_machine",             # Withdraw cash on the go!
+        "vending_machine",         # Snacks and drinks on the go!
     ]
 ```
 
@@ -381,6 +385,10 @@ class MikroCarrier(IVehicle):
 | **Clone Drones** | **4 mini-clones!** |
 | Candy Dispenser | 100 pieces, 6 types, climate controlled! |
 | Speaker System | 40W, Bluetooth, TTS announcements! |
+| Earpod Case | Store & charge wireless earbuds! |
+| Toilet Feature | Emergency mini toilet with privacy! |
+| ATM Machine | Withdraw cash anywhere! |
+| Vending Machine | Snacks & drinks dispenser! |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -751,7 +759,11 @@ mikro_dojo/
         ├── clone_deployer.py      # Mini-clone drone deployment system
         ├── robot_bodyguards.py    # Mini humanoid robot bodyguards
         ├── candy_dispenser.py     # Candy dispenser with climate control
-        └── speaker_system.py      # Speaker system for music & effects
+        ├── speaker_system.py      # Speaker system for music & effects
+        ├── earpod_case.py         # Wireless earbud storage & charging
+        ├── toilet_feature.py      # Emergency toilet system
+        ├── atm_machine.py         # Mobile ATM for cash withdrawals
+        └── vending_machine.py     # Snacks & drinks vending machine
 ```
 
 **Plane Launcher Interface**:
@@ -1826,6 +1838,512 @@ speaker_system:
     long: [1000]              # 1 second honk
     double: [200, 100, 200]   # Two short honks
     shave_and_haircut: [200, 100, 200, 100, 400, 200, 400]
+```
+
+---
+
+**Earpod Case System**:
+A built-in case to store and charge your wireless earbuds while on the go!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class EarpodState(Enum):
+    EMPTY = "empty"                # No earbuds in case
+    STORED = "stored"              # Earbuds stored and charging
+    READY = "ready"                # Fully charged and ready
+    DISPENSING = "dispensing"      # Ejecting earbuds
+
+@dataclass
+class EarpodStatus:
+    earbuds_present: bool          # Are earbuds in the case?
+    case_battery_percent: int      # Case battery level (0-100)
+    earpod_battery_percent: int    # Earpod battery level (0-100)
+    charging: bool                 # Currently charging earbuds?
+    case_open: bool                # Is the case lid open?
+
+class IEarpodCase(ABC):
+    """Interface for earpod case system"""
+
+    @abstractmethod
+    def open_case(self) -> bool:
+        """Open the earpod case lid"""
+        ...
+
+    @abstractmethod
+    def close_case(self) -> bool:
+        """Close the earpod case lid"""
+        ...
+
+    @abstractmethod
+    def eject_earbuds(self) -> bool:
+        """Pop earbuds up for easy grabbing"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> EarpodStatus:
+        """Get case and earpod status"""
+        ...
+
+    @abstractmethod
+    def start_charging(self) -> None:
+        """Begin charging earbuds"""
+        ...
+
+    @abstractmethod
+    def pair_bluetooth(self) -> bool:
+        """Pair earbuds with vehicle's Bluetooth"""
+        ...
+```
+
+**Earpod Case Hardware**:
+- **Location**: Dashboard compartment with pop-up lid
+- **Compatibility**: Universal - fits most wireless earbuds
+- **Case Battery**: 500mAh (charges earbuds 3x)
+- **Charging Port**: USB-C input for case charging
+- **Wireless Charging**: Qi-compatible charging pad
+- **Eject Mechanism**: Spring-loaded pop-up
+- **LED Indicators**: Battery level lights
+
+**Earpod Case Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Case Battery | 500mAh |
+| Earbud Charges | 3x full charges |
+| Charging Type | Wireless Qi + USB-C |
+| Compatibility | Universal |
+| Eject Mechanism | Spring pop-up |
+| LED Indicators | 4 battery lights |
+
+**Voice Commands for Earpod Case**:
+- "Open earpod case" - Pop open the lid
+- "Close earpod case" - Close the lid
+- "Eject earbuds" - Pop earbuds up for grabbing
+- "Earpod battery" - Check earbud battery level
+- "Case battery" - Check case battery level
+- "Pair earbuds" - Connect to vehicle Bluetooth
+
+**Earpod Case Configuration**:
+```yaml
+earpod_case:
+  enabled: true
+  location: dashboard
+  case_battery_mah: 500
+  charging:
+    wireless_qi: true
+    usb_c: true
+  compatibility: universal
+  auto_pair: true
+  led_indicators: 4
+  eject_style: spring_popup
+```
+
+---
+
+**Toilet Feature**:
+An emergency mini toilet that deploys from the vehicle for those urgent situations!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class ToiletState(Enum):
+    STOWED = "stowed"              # Hidden inside vehicle
+    DEPLOYING = "deploying"        # Extending out
+    READY = "ready"                # Ready for use
+    IN_USE = "in_use"              # Currently occupied
+    CLEANING = "cleaning"          # Self-cleaning cycle
+    RETRACTING = "retracting"      # Going back inside
+
+class PrivacyMode(Enum):
+    NONE = "none"                  # No privacy screen
+    PARTIAL = "partial"            # Side screens only
+    FULL = "full"                  # Full enclosure deployed
+
+@dataclass
+class ToiletStatus:
+    state: ToiletState             # Current toilet state
+    privacy_mode: PrivacyMode      # Privacy screen status
+    waste_tank_percent: int        # Waste tank fill level
+    water_tank_percent: int        # Fresh water level
+    sanitizer_level: int           # Sanitizer remaining
+    last_cleaned: str              # Timestamp of last clean
+
+class IToiletFeature(ABC):
+    """Interface for emergency toilet system"""
+
+    @abstractmethod
+    def deploy(self) -> bool:
+        """Deploy toilet from vehicle"""
+        ...
+
+    @abstractmethod
+    def retract(self) -> bool:
+        """Retract toilet back into vehicle"""
+        ...
+
+    @abstractmethod
+    def set_privacy(self, mode: PrivacyMode) -> None:
+        """Deploy privacy screens"""
+        ...
+
+    @abstractmethod
+    def flush(self) -> bool:
+        """Flush and clean toilet"""
+        ...
+
+    @abstractmethod
+    def auto_clean(self) -> None:
+        """Run automatic cleaning cycle"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> ToiletStatus:
+        """Get toilet system status"""
+        ...
+
+    @abstractmethod
+    def refill_supplies(self) -> None:
+        """Refill water and sanitizer"""
+        ...
+```
+
+**Toilet Hardware**:
+- **Location**: Rear compartment with slide-out deployment
+- **Seat Type**: Compact folding seat
+- **Privacy**: Pop-up privacy screens (3-sided enclosure)
+- **Waste Tank**: 2L sealed waste container
+- **Water Tank**: 1L fresh water for flushing
+- **Sanitizer**: Automatic spray after each use
+- **Self-Cleaning**: UV sanitization cycle
+
+**Toilet Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Deployment | Slide-out from rear |
+| Privacy Screen | 3-sided pop-up |
+| Waste Tank | 2L capacity |
+| Water Tank | 1L capacity |
+| Sanitizer | Auto-spray |
+| Cleaning | UV sanitization |
+| Deploy Time | 5 seconds |
+
+**Voice Commands for Toilet**:
+- "Deploy toilet" - Extend toilet from vehicle
+- "Retract toilet" - Put toilet away
+- "Privacy mode" - Deploy full privacy screens
+- "Flush" - Flush and clean
+- "Toilet status" - Check tank levels
+- "Clean toilet" - Run cleaning cycle
+
+**Toilet Configuration**:
+```yaml
+toilet_feature:
+  enabled: true
+  location: rear_compartment
+  deployment: slide_out
+  privacy_screens:
+    enabled: true
+    sides: 3
+    height_cm: 120
+  tanks:
+    waste_capacity_liters: 2
+    water_capacity_liters: 1
+  sanitization:
+    auto_sanitizer: true
+    uv_cleaning: true
+    cleaning_cycle_seconds: 30
+  alerts:
+    waste_tank_warning: 80      # Warn at 80% full
+    water_tank_warning: 20      # Warn at 20% remaining
+    sanitizer_warning: 10       # Warn at 10% remaining
+```
+
+---
+
+**ATM Machine**:
+A mini ATM built into the vehicle for withdrawing cash on the go!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class ATMState(Enum):
+    STOWED = "stowed"              # Hidden inside vehicle
+    ACTIVE = "active"              # Ready for transactions
+    PROCESSING = "processing"      # Processing transaction
+    DISPENSING = "dispensing"      # Dispensing cash
+    ERROR = "error"                # Error state
+
+class Currency(Enum):
+    USD = "usd"                    # US Dollars
+    EUR = "eur"                    # Euros
+    GBP = "gbp"                    # British Pounds
+    JPY = "jpy"                    # Japanese Yen
+
+@dataclass
+class ATMStatus:
+    state: ATMState                # Current ATM state
+    cash_available: dict[str, int] # Bills available by denomination
+    total_cash: float              # Total cash in machine
+    connected: bool                # Connected to bank network?
+    last_transaction: str          # Last transaction timestamp
+
+class IATMMachine(ABC):
+    """Interface for ATM machine system"""
+
+    @abstractmethod
+    def activate(self) -> bool:
+        """Activate ATM for transactions"""
+        ...
+
+    @abstractmethod
+    def deactivate(self) -> bool:
+        """Deactivate and stow ATM"""
+        ...
+
+    @abstractmethod
+    def withdraw(self, amount: float, currency: Currency) -> bool:
+        """Withdraw cash"""
+        ...
+
+    @abstractmethod
+    def check_balance(self, card_data: str) -> float:
+        """Check account balance"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> ATMStatus:
+        """Get ATM status"""
+        ...
+
+    @abstractmethod
+    def refill_cash(self, denomination: str, count: int) -> None:
+        """Refill cash into ATM"""
+        ...
+
+    @abstractmethod
+    def print_receipt(self) -> bool:
+        """Print transaction receipt"""
+        ...
+```
+
+**ATM Hardware**:
+- **Location**: Side panel with flip-out screen
+- **Display**: 5-inch touchscreen
+- **Card Reader**: Chip + contactless (NFC)
+- **Cash Capacity**: $2,000 in mixed bills
+- **Denominations**: $1, $5, $10, $20, $50, $100
+- **Connectivity**: 4G/LTE for bank connection
+- **Security**: Encrypted transactions, PIN pad
+- **Receipt Printer**: Thermal mini printer
+
+**ATM Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Cash Capacity | $2,000 |
+| Denominations | $1, $5, $10, $20, $50, $100 |
+| Display | 5-inch touchscreen |
+| Card Types | Chip, swipe, NFC contactless |
+| Connectivity | 4G/LTE encrypted |
+| Receipt | Thermal printer |
+| Max Withdrawal | $500 per transaction |
+
+**Voice Commands for ATM**:
+- "Open ATM" - Activate the ATM
+- "Close ATM" - Deactivate and stow
+- "ATM status" - Check cash levels
+- "Refill ATM" - Open for refilling
+
+**ATM Configuration**:
+```yaml
+atm_machine:
+  enabled: true
+  location: side_panel
+  display:
+    size_inches: 5
+    type: touchscreen
+  card_reader:
+    chip: true
+    swipe: true
+    nfc: true
+  cash_capacity:
+    total_usd: 2000
+    denominations:
+      $1: 50
+      $5: 50
+      $10: 50
+      $20: 50
+      $50: 10
+      $100: 5
+  connectivity:
+    type: 4g_lte
+    encryption: aes_256
+  limits:
+    max_withdrawal: 500
+    daily_limit: 1000
+  receipt_printer:
+    enabled: true
+    paper_rolls: 2
+```
+
+---
+
+**Vending Machine**:
+A mini vending machine with snacks and drinks for on-the-go refreshments!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class ProductCategory(Enum):
+    SNACKS = "snacks"              # Chips, cookies, etc.
+    DRINKS = "drinks"              # Bottles and cans
+    CANDY = "candy"                # Candy bars
+    HEALTHY = "healthy"            # Granola, fruit snacks
+
+class VendingState(Enum):
+    STOWED = "stowed"              # Hidden inside vehicle
+    ACTIVE = "active"              # Ready for purchases
+    DISPENSING = "dispensing"      # Dispensing product
+    RESTOCKING = "restocking"      # Being refilled
+
+@dataclass
+class Product:
+    name: str                      # Product name
+    category: ProductCategory      # Product category
+    price: float                   # Price
+    slot: str                      # Slot location (A1, B2, etc.)
+    quantity: int                  # Items in stock
+
+@dataclass
+class VendingStatus:
+    state: VendingState            # Current state
+    products: list[Product]        # Available products
+    total_items: int               # Total items in stock
+    temperature_celsius: float     # Internal temperature
+    revenue_today: float           # Today's sales
+
+class IVendingMachine(ABC):
+    """Interface for vending machine system"""
+
+    @abstractmethod
+    def activate(self) -> bool:
+        """Activate vending machine"""
+        ...
+
+    @abstractmethod
+    def deactivate(self) -> bool:
+        """Deactivate and stow"""
+        ...
+
+    @abstractmethod
+    def purchase(self, slot: str, payment_method: str) -> bool:
+        """Purchase item from slot"""
+        ...
+
+    @abstractmethod
+    def get_products(self) -> list[Product]:
+        """Get available products"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> VendingStatus:
+        """Get vending machine status"""
+        ...
+
+    @abstractmethod
+    def restock(self, slot: str, quantity: int) -> None:
+        """Restock a product slot"""
+        ...
+
+    @abstractmethod
+    def set_temperature(self, celsius: float) -> None:
+        """Set cooling temperature"""
+        ...
+```
+
+**Vending Machine Hardware**:
+- **Location**: Side panel with glass display front
+- **Display**: LED-lit glass door showing products
+- **Slots**: 12 product slots (3 rows × 4 columns)
+- **Capacity**: 24 items total (2 per slot)
+- **Cooling**: Mini fridge for drinks (5°C)
+- **Payment**: Contactless, card, or cash
+- **Dispense**: Spiral coil mechanism
+
+**Vending Machine Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Product Slots | 12 (3×4 grid) |
+| Total Capacity | 24 items |
+| Drink Cooling | 5°C mini fridge |
+| Payment | NFC, card, cash |
+| Display | LED-lit glass |
+| Power | 50W cooling system |
+
+**Available Products**:
+| Slot | Product | Category | Price |
+|------|---------|----------|-------|
+| A1 | Chips | Snacks | $1.50 |
+| A2 | Cookies | Snacks | $1.25 |
+| A3 | Pretzels | Snacks | $1.25 |
+| A4 | Crackers | Snacks | $1.00 |
+| B1 | Water | Drinks | $1.00 |
+| B2 | Soda | Drinks | $1.50 |
+| B3 | Juice | Drinks | $2.00 |
+| B4 | Energy Drink | Drinks | $2.50 |
+| C1 | Candy Bar | Candy | $1.25 |
+| C2 | Gummy Bears | Candy | $1.50 |
+| C3 | Granola Bar | Healthy | $1.75 |
+| C4 | Fruit Snacks | Healthy | $1.50 |
+
+**Voice Commands for Vending Machine**:
+- "Open vending machine" - Activate
+- "Close vending machine" - Deactivate
+- "What snacks do you have?" - List products
+- "I want chips" / "Get me water" - Purchase
+- "Vending status" - Check stock levels
+- "Restock vending" - Open for restocking
+
+**Vending Machine Configuration**:
+```yaml
+vending_machine:
+  enabled: true
+  location: side_panel
+  display:
+    type: led_glass
+    size_inches: 8
+  slots:
+    rows: 3
+    columns: 4
+    capacity_per_slot: 2
+  cooling:
+    enabled: true
+    target_celsius: 5
+    for_rows: [B]  # Only drinks row
+  payment:
+    nfc: true
+    card: true
+    cash: true
+  products:
+    A1: { name: "Chips", price: 1.50, qty: 2 }
+    A2: { name: "Cookies", price: 1.25, qty: 2 }
+    A3: { name: "Pretzels", price: 1.25, qty: 2 }
+    A4: { name: "Crackers", price: 1.00, qty: 2 }
+    B1: { name: "Water", price: 1.00, qty: 2 }
+    B2: { name: "Soda", price: 1.50, qty: 2 }
+    B3: { name: "Juice", price: 2.00, qty: 2 }
+    B4: { name: "Energy Drink", price: 2.50, qty: 2 }
+    C1: { name: "Candy Bar", price: 1.25, qty: 2 }
+    C2: { name: "Gummy Bears", price: 1.50, qty: 2 }
+    C3: { name: "Granola Bar", price: 1.75, qty: 2 }
+    C4: { name: "Fruit Snacks", price: 1.50, qty: 2 }
 ```
 
 ---
