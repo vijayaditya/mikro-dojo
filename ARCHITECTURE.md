@@ -350,6 +350,7 @@ class MikroCarrier(IVehicle):
         "crash_protection",        # Deployable safety armor layers
         "water_landing",           # Inflatable emergency raft
         "dual_nerf_turrets",       # 2x retractable nerf guns in headlights
+        "booster_system",          # Speed boost: 80km/h ground, 150mph air!
     ]
 ```
 
@@ -361,8 +362,8 @@ class MikroCarrier(IVehicle):
 | Base Weight | 8 kg |
 | Payload Capacity | 5 kg |
 | Drive System | 6WD independent motors |
-| Ground Speed | 40 km/h |
-| **Flight Speed** | **100 mph (160 km/h)** |
+| Ground Speed | 40 km/h (80 km/h boosted!) |
+| **Flight Speed** | **100 mph (150 mph boosted!)** |
 | Flight System | Quad ducted fan turbines |
 | Battery | 6S 10000mAh LiPo |
 | Ground Runtime | 45 minutes |
@@ -596,6 +597,130 @@ class IWaterLanding(ABC):
 - "Armor up" - Deploy all crash protection
 - "Safety status" - Report protection system status
 
+### Module 1.8: Booster System
+
+**Nitro Boost for Land and Air!**
+Activate the booster to go even faster on the ground or in the air!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class BoostMode(Enum):
+    OFF = "off"                 # Normal speed
+    GROUND_BOOST = "ground"     # Land speed boost
+    AIR_BOOST = "air"           # Flight speed boost
+    MAXIMUM = "maximum"         # All boosters at full power
+
+@dataclass
+class BoostStatus:
+    active: bool                # Is boost currently on?
+    mode: BoostMode             # Current boost mode
+    fuel_percent: float         # Remaining boost fuel (0-100)
+    temperature_celsius: float  # Booster temperature
+    cooldown_seconds: float     # Time until boost available again
+
+class IBoosterSystem(ABC):
+    """Interface for speed booster system"""
+
+    @abstractmethod
+    def activate_boost(self, mode: BoostMode) -> bool:
+        """Activate speed boost"""
+        ...
+
+    @abstractmethod
+    def deactivate_boost(self) -> None:
+        """Turn off boost"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> BoostStatus:
+        """Get current boost status"""
+        ...
+
+    @abstractmethod
+    def refuel(self) -> None:
+        """Refill boost fuel tank"""
+        ...
+
+    @abstractmethod
+    def get_current_speed_multiplier(self) -> float:
+        """Get speed increase factor (1.0 = normal, 2.0 = double)"""
+        ...
+```
+
+**Booster Hardware**:
+- **Type**: Electric turbo boost + afterburner
+- **Ground Boost**: Activates extra motor power + rear thruster
+- **Air Boost**: Overdrives flight turbines + auxiliary jets
+- **Fuel**: Rechargeable boost capacitor bank
+- **Boost Duration**: 10 seconds at full power
+- **Cooldown**: 30 seconds between boosts
+- **Visual Effect**: Blue flames from rear exhausts!
+
+**Speed Boost Specifications**:
+| Mode | Normal Speed | Boosted Speed | Increase |
+|------|--------------|---------------|----------|
+| Ground | 40 km/h | **80 km/h** | 2x faster! |
+| Air Cruise | 50 mph | **100 mph** | 2x faster! |
+| Air Max | 100 mph | **150 mph** | 1.5x faster! |
+
+**Boost System Hardware**:
+- **Capacitor Bank**: High-discharge LiPo cells for instant power
+- **Ground Thruster**: Rear-mounted electric ducted fan
+- **Air Afterburner**: Auxiliary jet assist on flight turbines
+- **Cooling**: Active liquid cooling to prevent overheating
+- **Exhaust**: LED-lit blue flame effect pipes
+- **Sound**: Speaker plays turbo/jet sounds during boost
+
+**Boost Fuel Gauge**:
+| Level | Status | Boost Available |
+|-------|--------|-----------------|
+| 100-75% | Full | 10 seconds |
+| 75-50% | Good | 7 seconds |
+| 50-25% | Low | 4 seconds |
+| 25-0% | Critical | 2 seconds |
+| 0% | Empty | Recharging... |
+
+**Voice Commands for Booster**:
+- "Boost" / "Hit it" / "Nitro" - Activate boost
+- "Ground boost" - Land speed boost only
+- "Air boost" - Flight speed boost only
+- "Maximum boost" - All boosters at once
+- "Boost off" - Deactivate boost
+- "Fuel check" - Report boost fuel level
+- "Cool down" - Check cooldown timer
+
+**Booster Configuration**:
+```yaml
+booster_system:
+  enabled: true
+  ground_boost:
+    enabled: true
+    speed_multiplier: 2.0      # Double ground speed
+    max_speed_kmh: 80
+    thruster_power: 2000       # Watts
+  air_boost:
+    enabled: true
+    speed_multiplier: 1.5      # 50% faster in air
+    max_speed_mph: 150
+    afterburner_power: 3000    # Watts
+  fuel:
+    capacity_seconds: 10       # Full boost duration
+    recharge_rate: 0.33        # Seconds of fuel per second (30s full recharge)
+  safety:
+    max_temperature_celsius: 80
+    auto_cutoff: true          # Stop boost if overheating
+    cooldown_required: true
+  effects:
+    led_flames: true
+    sound_effects: true
+    exhaust_color: blue
+```
+
+---
+
 ### Module 1.5: Vehicle Accessories
 
 **Plane Launcher Module**:
@@ -611,7 +736,8 @@ mikro_dojo/
         ├── flight_system.py       # Quad turbine flight system (100mph)
         ├── crash_protection.py    # 3-layer crash armor system
         ├── water_landing.py       # Inflatable raft emergency system
-        └── nerf_turret.py         # Retractable nerf gun turret system
+        ├── nerf_turret.py         # Retractable nerf gun turret system
+        └── booster_system.py      # Speed boost for land and air
 ```
 
 **Plane Launcher Interface**:
