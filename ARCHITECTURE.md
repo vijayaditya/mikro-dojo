@@ -353,7 +353,7 @@ class MikroCarrier(IVehicle):
         "booster_system",          # Speed boost: 80km/h ground, 150mph air!
         "gum_dispenser",           # 50 gumballs, 6 flavors, launch or drop!
         "clone_deployer",          # Deploy mini-clone drones!
-        "robot_bodyguards",        # 2 mini humanoid robot bodyguards!
+        "robot_bodyguards",        # 2 mini humanoid robot bodyguards with nerf guns!
         "candy_dispenser",         # 100 pieces, multiple candy types!
         "speaker_system",          # Play music, sounds, announcements!
         "earpod_case",             # Store and charge wireless earbuds!
@@ -386,6 +386,7 @@ class MikroCarrier(IVehicle):
 | **Nerf Turrets** | **2x (60 darts total)** |
 | Gum Dispenser | 50 gumballs, 6 flavors |
 | **Clone Drones** | **4 mini-clones!** |
+| **Bodyguard Nerf Guns** | **4 guns, 24 darts!** |
 | Candy Dispenser | 100 pieces, 6 types, climate controlled! |
 | Speaker System | 40W, Bluetooth, TTS announcements! |
 | Earpod Case | Store & charge wireless earbuds! |
@@ -1415,7 +1416,7 @@ DIAMOND:          LINE:            SPREAD:
 ---
 
 **Robot Bodyguard System**:
-Two mini humanoid robot bodyguards that deploy from the sides of the vehicle!
+Two mini humanoid robot bodyguards that deploy from the sides of the vehicle - each armed with nerf guns in both hands!
 
 ```python
 from abc import ABC, abstractmethod
@@ -1433,6 +1434,13 @@ class BodyguardStance(Enum):
     DEFENDING = "defending"    # Active defense pose
     DANCING = "dancing"        # Fun mode!
     WAVING = "waving"          # Friendly greeting
+    AIMING = "aiming"          # Nerf guns raised and ready!
+    FIRING = "firing"          # Shooting nerf darts!
+
+@dataclass
+class NerfGunStatus:
+    darts_loaded: int          # Darts in this gun (max 6)
+    ready_to_fire: bool        # Gun ready?
 
 @dataclass
 class BodyguardStatus:
@@ -1440,10 +1448,13 @@ class BodyguardStatus:
     stance: BodyguardStance      # Current pose/action
     battery_percent: float       # Battery level
     distance_from_vehicle: float # How far from carrier
-    arm_position: str            # "down", "up", "crossed", "waving"
+    arm_position: str            # "down", "up", "crossed", "waving", "aiming"
+    left_hand_nerf: NerfGunStatus   # Left hand nerf gun
+    right_hand_nerf: NerfGunStatus  # Right hand nerf gun
+    total_darts: int             # Total darts remaining
 
 class IRobotBodyguard(ABC):
-    """Interface for mini humanoid robot bodyguards"""
+    """Interface for mini humanoid robot bodyguards with nerf guns"""
 
     @abstractmethod
     def deploy(self, position: BodyguardPosition) -> bool:
@@ -1484,28 +1495,62 @@ class IRobotBodyguard(ABC):
     def perform_action(self, action: str) -> None:
         """Special actions: wave, salute, dance, high-five"""
         ...
+
+    # NERF GUN METHODS
+    @abstractmethod
+    def aim_guns(self, position: BodyguardPosition, target: tuple) -> None:
+        """Aim nerf guns at target coordinates"""
+        ...
+
+    @abstractmethod
+    def fire_nerf(self, position: BodyguardPosition, hand: str = "both") -> bool:
+        """Fire nerf gun(s) - hand: 'left', 'right', or 'both'"""
+        ...
+
+    @abstractmethod
+    def fire_all_guards(self) -> bool:
+        """All bodyguards fire all nerf guns at once!"""
+        ...
+
+    @abstractmethod
+    def reload_nerf(self, position: BodyguardPosition) -> None:
+        """Reload nerf guns (must dock to reload)"""
+        ...
+
+    @abstractmethod
+    def get_ammo_status(self) -> dict:
+        """Get ammo count for all bodyguard nerf guns"""
+        ...
 ```
 
 **Robot Bodyguard Hardware**:
 - **Quantity**: 2 bodyguards (LEFT and RIGHT)
 - **Storage**: Side compartments that slide open
 - **Height**: 25cm tall (humanoid form)
-- **Weight**: 300g each
+- **Weight**: 350g each (including nerf guns)
 - **Joints**: 12 servo motors per robot (articulated limbs)
 - **Walking Speed**: Matches vehicle up to 5 km/h
 - **Battery**: 30 minutes active time
 - **Recharge**: Auto-charge when docked
+- **NERF GUNS**: 2 mini nerf guns per bodyguard (one in each hand!)
+- **Darts Per Gun**: 6 darts each
+- **Total Darts**: 24 darts (4 guns × 6 darts)
+- **Fire Rate**: 2 darts/second per gun
 
 **Bodyguard Specifications**:
 | Specification | Per Bodyguard | Both |
 |---------------|---------------|------|
 | Height | 25cm | - |
-| Weight | 300g | 600g |
+| Weight | 350g | 700g |
 | Joints | 12 servos | 24 servos |
 | Walking Speed | 5 km/h | - |
 | Battery Life | 30 minutes | - |
 | Arm Reach | 8cm | - |
 | Head Movement | Pan/tilt | - |
+| **Nerf Guns** | **2 (both hands)** | **4 guns total!** |
+| **Darts Per Gun** | **6 darts** | **24 darts total!** |
+| **Fire Rate** | **2 darts/sec/gun** | **8 darts/sec max!** |
+| **Range** | **5 meters** | - |
 
 **Bodyguard Actions**:
 | Action | Description | Voice Command |
@@ -1518,6 +1563,9 @@ class IRobotBodyguard(ABC):
 | High-Five | Reach out for high-five | "High five" |
 | Defend | Defensive stance | "Guards defend" |
 | Cross Arms | Cool crossed-arms pose | "Guards cross arms" |
+| **Aim** | **Raise nerf guns and aim** | **"Guards aim"** |
+| **Fire** | **Shoot nerf darts!** | **"Guards fire!"** |
+| **Dual Wield** | **Fire both guns rapidly** | **"Guards unleash!"** |
 
 **Voice Commands for Robot Bodyguards**:
 - "Deploy guards" - Both bodyguards emerge from sides
@@ -1530,6 +1578,12 @@ class IRobotBodyguard(ABC):
 - "Guards salute" - Military salute
 - "Guards high-five" - High-five pose
 - "Guard status" - Check battery and status
+- **"Guards aim"** - Raise nerf guns ready to fire
+- **"Guards fire!"** - Shoot nerf darts
+- **"Guards unleash!"** - Rapid fire all guns!
+- **"Left guard fire" / "Right guard fire"** - One guard fires
+- **"Ammo check"** - Check dart count
+- **"Reload guards"** - Dock and reload nerf guns
 
 **Bodyguard Configuration**:
 ```yaml
@@ -1546,10 +1600,18 @@ robot_bodyguards:
     personality: friendly
   specs:
     height_cm: 25
-    weight_g: 300
+    weight_g: 350              # Heavier with nerf guns
     joints: 12
     walk_speed_kmh: 5
     battery_minutes: 30
+  nerf_guns:                   # NEW: Nerf gun configuration!
+    guns_per_guard: 2          # One in each hand
+    darts_per_gun: 6
+    total_darts: 24            # 4 guns × 6 darts
+    fire_rate_per_second: 2
+    range_meters: 5
+    auto_aim: true             # Camera-assisted targeting
+    reload_on_dock: true       # Auto-reload when docked
   behaviors:
     auto_deploy_on_stop: false
     walk_with_vehicle: true
@@ -1559,14 +1621,19 @@ robot_bodyguards:
     wave_duration_seconds: 3
     dance_moves: ["robot", "shuffle", "spin"]
     salute_style: military
+    fire_pose: dual_wield      # Both arms extended
 ```
 
-**Bodyguard Formation**:
+**Bodyguard Formation (Armed!)**:
 ```
-      [CARRIER]
-   🤖          🤖
-  LEFT        RIGHT
- GUARD       GUARD
+         [CARRIER]
+   🤖🔫          🔫🤖
+  LEFT            RIGHT
+ GUARD            GUARD
+  🔫                🔫
+
+  4 Nerf Guns Total!
+  24 Darts Ready!
 ```
 
 ---
