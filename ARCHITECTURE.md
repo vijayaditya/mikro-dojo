@@ -313,6 +313,107 @@ class IVehicle(ABC):
     def capabilities(self) -> dict: ...
 ```
 
+### Module 1.5: Vehicle Accessories
+
+**Plane Launcher Module**:
+```
+mikro_dojo/
+└── hal/
+    └── accessories/
+        ├── __init__.py
+        ├── plane_launcher.py      # Plane launcher interface & implementation
+        └── front_camera.py        # Front camera module
+```
+
+**Plane Launcher Interface**:
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class LauncherState(Enum):
+    IDLE = "idle"
+    ARMED = "armed"
+    LAUNCHING = "launching"
+    RELOADING = "reloading"
+
+@dataclass
+class PlaneConfig:
+    plane_type: str           # "glider", "powered", "foam"
+    weight_grams: float       # Plane weight
+    wingspan_cm: float        # Wingspan for flight planning
+
+@dataclass
+class LaunchParameters:
+    angle_degrees: float      # Launch angle (0-45)
+    power_percent: float      # Launch power (0-100)
+    delay_ms: int             # Delay before launch
+
+class IPlaneLauncher(ABC):
+    """Interface for roof-mounted plane launcher"""
+
+    @abstractmethod
+    def arm(self) -> bool:
+        """Prepare launcher for firing"""
+        ...
+
+    @abstractmethod
+    def launch(self, params: LaunchParameters) -> bool:
+        """Launch the plane with specified parameters"""
+        ...
+
+    @abstractmethod
+    def get_state(self) -> LauncherState:
+        """Get current launcher state"""
+        ...
+
+    @abstractmethod
+    def is_loaded(self) -> bool:
+        """Check if plane is loaded"""
+        ...
+
+    @abstractmethod
+    def get_planes_remaining(self) -> int:
+        """Get number of planes in magazine"""
+        ...
+
+    @property
+    @abstractmethod
+    def max_capacity(self) -> int:
+        """Maximum planes the launcher can hold"""
+        ...
+```
+
+**Launcher Hardware Specifications**:
+- **Mounting**: Roof-mounted rail system with quick-release
+- **Capacity**: 1-3 planes depending on model
+- **Launch Mechanism**: Spring-loaded or compressed air
+- **Launch Angle**: Adjustable 0-45 degrees via servo
+- **Power Source**: Shared with vehicle or independent LiPo
+- **Weight**: <200g including one plane
+- **Trigger**: Electronic servo-actuated release
+
+**Supported Plane Types**:
+| Type | Weight | Wingspan | Flight Time | Use Case |
+|------|--------|----------|-------------|----------|
+| Foam Glider | 20-50g | 30-50cm | 10-30s glide | Basic aerial observation |
+| Powered Mini | 50-100g | 40-60cm | 2-5 min | Extended reconnaissance |
+| FPV Micro | 80-150g | 50-80cm | 3-8 min | First-person view missions |
+
+**Front Camera Module**:
+The vehicle includes a forward-facing camera system for:
+- Obstacle detection and avoidance
+- Visual navigation and SLAM
+- Recording skill execution from ego perspective
+- Real-time streaming for teleoperation
+
+**Camera Specifications**:
+- **Type**: Wide-angle stereo or monocular
+- **Resolution**: 720p-1080p at 30-60fps
+- **Field of View**: 90-120 degrees horizontal
+- **Mounting**: Hood-mounted or bumper-integrated
+- **Features**: Low-light capable, global shutter preferred
+
 ### Module 2: Perception System
 
 **Purpose**: Multi-view observation, synchronization, and processing
@@ -696,6 +797,17 @@ vehicles:
     sensors:
       imu: bno055
       camera: csi_camera
+    accessories:
+      front_camera:
+        enabled: true
+        type: wide_angle_stereo
+        resolution: 720p
+        fps: 30
+      plane_launcher:
+        enabled: true
+        type: spring_loaded
+        capacity: 2
+        plane_type: foam_glider
 
   - id: car_beta
     type: wltoys_124019
@@ -703,6 +815,12 @@ vehicles:
     connection:
       type: wifi
       ip: 192.168.1.101
+    accessories:
+      front_camera:
+        enabled: true
+        type: monocular
+        resolution: 1080p
+        fps: 60
 ```
 
 ---
