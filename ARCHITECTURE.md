@@ -363,6 +363,7 @@ class MikroCarrier(IVehicle):
         "controller_ai",           # AI assistant on the controller!
         "icee_machine",            # Frozen ICEE slushie dispenser!
         "tv_screen",               # TV screen above the ICEE machine!
+        "bookshelf",               # Mini bookshelf for reading on the go!
     ]
 ```
 
@@ -396,6 +397,7 @@ class MikroCarrier(IVehicle):
 | Controller AI | Smart AI assistant on controller! |
 | ICEE Machine | Frozen slushie drinks! |
 | TV Screen | Watch shows above the ICEE machine! |
+| Bookshelf | Mini library with 12 books! |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -773,7 +775,8 @@ mikro_dojo/
         ├── vending_machine.py     # Snacks & drinks vending machine
         ├── controller_ai.py       # AI assistant on the controller
         ├── icee_machine.py        # Frozen ICEE slushie dispenser
-        └── tv_screen.py           # TV screen above ICEE machine
+        ├── tv_screen.py           # TV screen above ICEE machine
+        └── bookshelf.py           # Mini bookshelf with 12 books
 ```
 
 **Plane Launcher Interface**:
@@ -2952,6 +2955,182 @@ tv_screen:
     │   Machine       │
     │  🔴🔵🟣🟢🟤    │  ← 6 Flavors
     └─────────────────┘
+```
+
+---
+
+**Bookshelf System**:
+A mini bookshelf to store and read books while enjoying your ICEE!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class BookGenre(Enum):
+    ADVENTURE = "adventure"        # Action and adventure stories
+    COMEDY = "comedy"              # Funny books
+    MYSTERY = "mystery"            # Detective stories
+    SCIENCE = "science"            # Educational science books
+    COMICS = "comics"              # Comic books and graphic novels
+    FANTASY = "fantasy"            # Magic and fantasy worlds
+
+@dataclass
+class Book:
+    title: str                     # Book title
+    author: str                    # Author name
+    genre: BookGenre               # Book genre
+    pages: int                     # Number of pages
+    slot: int                      # Shelf slot (1-12)
+    currently_reading: bool        # Is this book being read?
+
+@dataclass
+class BookshelfStatus:
+    total_books: int               # Books currently on shelf
+    max_capacity: int              # Maximum books (12)
+    current_book: Book | None      # Book currently being read
+    reading_light_on: bool         # Is reading light active?
+    books_by_genre: dict[BookGenre, int]  # Count per genre
+
+class IBookshelf(ABC):
+    """Interface for mini bookshelf system"""
+
+    @abstractmethod
+    def get_book(self, slot: int) -> Book:
+        """Retrieve a book from a slot"""
+        ...
+
+    @abstractmethod
+    def return_book(self, slot: int) -> bool:
+        """Return book to its slot"""
+        ...
+
+    @abstractmethod
+    def list_books(self) -> list[Book]:
+        """List all books on shelf"""
+        ...
+
+    @abstractmethod
+    def find_by_genre(self, genre: BookGenre) -> list[Book]:
+        """Find books by genre"""
+        ...
+
+    @abstractmethod
+    def toggle_reading_light(self) -> bool:
+        """Turn reading light on/off"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> BookshelfStatus:
+        """Get bookshelf status"""
+        ...
+
+    @abstractmethod
+    def recommend_book(self) -> Book:
+        """AI recommends a book based on mood"""
+        ...
+```
+
+**Bookshelf Hardware**:
+- **Location**: Side panel with glass door
+- **Capacity**: 12 mini books (pocket-sized)
+- **Book Size**: 10cm × 7cm (pocket paperbacks)
+- **Shelves**: 3 shelves × 4 slots each
+- **Reading Light**: LED light strip for reading
+- **Door**: Magnetic latch glass door
+- **Book Holder**: Pop-out reading stand
+
+**Bookshelf Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Capacity | 12 books |
+| Book Size | 10cm × 7cm |
+| Shelves | 3 rows |
+| Slots Per Shelf | 4 |
+| Reading Light | LED strip |
+| Door Type | Magnetic glass |
+| Reading Stand | Pop-out holder |
+
+**Pre-loaded Book Collection**:
+| Slot | Title | Genre |
+|------|-------|-------|
+| 1 | "RC Car Adventures" | Adventure |
+| 2 | "The Flying Machine" | Science |
+| 3 | "Robot Friends" | Comedy |
+| 4 | "Mystery of the Garage" | Mystery |
+| 5 | "Super Car Comics #1" | Comics |
+| 6 | "Dragon Racers" | Fantasy |
+| 7 | "How Engines Work" | Science |
+| 8 | "Funny Car Jokes" | Comedy |
+| 9 | "Detective Wheels" | Mystery |
+| 10 | "Space Car Adventures" | Adventure |
+| 11 | "Hero Bot Comics #1" | Comics |
+| 12 | "The Magic Speedway" | Fantasy |
+
+**Voice Commands for Bookshelf**:
+- "Open bookshelf" - Open the glass door
+- "Close bookshelf" - Close the door
+- "Get book 1" / "Book slot 3" - Retrieve specific book
+- "What books do you have?" - List all books
+- "Adventure books" / "Comedy books" - Find by genre
+- "Reading light on" / "Light off" - Toggle reading light
+- "Recommend a book" - AI suggests a book
+- "Return book" - Put book back
+
+**Bookshelf Configuration**:
+```yaml
+bookshelf:
+  enabled: true
+  location: side_panel
+  capacity: 12
+  book_size:
+    height_cm: 10
+    width_cm: 7
+  shelves:
+    rows: 3
+    slots_per_row: 4
+  reading_light:
+    type: led_strip
+    brightness_levels: 5
+    auto_off_minutes: 30
+  door:
+    type: magnetic_glass
+    auto_close: true
+  reading_stand:
+    pop_out: true
+    adjustable_angle: true
+  books:
+    slot_1: { title: "RC Car Adventures", genre: adventure }
+    slot_2: { title: "The Flying Machine", genre: science }
+    slot_3: { title: "Robot Friends", genre: comedy }
+    slot_4: { title: "Mystery of the Garage", genre: mystery }
+    slot_5: { title: "Super Car Comics #1", genre: comics }
+    slot_6: { title: "Dragon Racers", genre: fantasy }
+    slot_7: { title: "How Engines Work", genre: science }
+    slot_8: { title: "Funny Car Jokes", genre: comedy }
+    slot_9: { title: "Detective Wheels", genre: mystery }
+    slot_10: { title: "Space Car Adventures", genre: adventure }
+    slot_11: { title: "Hero Bot Comics #1", genre: comics }
+    slot_12: { title: "The Magic Speedway", genre: fantasy }
+  ai_recommendations: true
+```
+
+**Reading Corner Setup**:
+```
+    ┌─────────────────┐
+    │  📚 BOOKSHELF   │
+    │  ┌─┬─┬─┬─┐      │
+    │  │1│2│3│4│ ←Row1│
+    │  ├─┼─┼─┼─┤      │
+    │  │5│6│7│8│ ←Row2│
+    │  ├─┼─┼─┼─┤      │
+    │  │9│10│11│12│←Row3│
+    │  └─┴─┴─┴─┘      │
+    │   💡 Light      │
+    └─────────────────┘
+
+    Grab an ICEE, pick a book,
+    and enjoy! 📖🧊
 ```
 
 ---
