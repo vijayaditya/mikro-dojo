@@ -316,12 +316,12 @@ class IVehicle(ABC):
 
 **Large Vehicle: MIKRO-CARRIER**
 
-For missions requiring high plane capacity and extended operations, the MIKRO-CARRIER is a larger vehicle platform:
+For missions requiring high plane capacity and extended operations, the MIKRO-CARRIER is a larger vehicle platform with land, air, and water capabilities:
 
 ```python
 @VehicleRegistry.register("mikro_carrier")
 class MikroCarrier(IVehicle):
-    """Large carrier vehicle with integrated plane storage and launcher"""
+    """Large carrier vehicle with integrated plane storage, launcher, and flight capability"""
 
     SPECIFICATIONS = {
         "scale": "1/5",                    # Larger than standard 1/10
@@ -330,10 +330,13 @@ class MikroCarrier(IVehicle):
         "height_cm": 35,                   # 35cm tall (with launcher)
         "weight_kg": 8.0,                  # 8kg base weight
         "payload_kg": 5.0,                 # 5kg payload capacity
-        "max_speed_kmh": 40,               # 40 km/h max speed
+        "max_ground_speed_kmh": 40,        # 40 km/h on ground
+        "max_flight_speed_mph": 100,       # 100 mph in flight mode!
         "drive": "6WD",                    # 6-wheel drive for stability
+        "flight_system": "quad_turbine",   # 4x ducted fan turbines
         "battery": "6S 10000mAh LiPo",     # Large battery
-        "runtime_minutes": 45,             # 45 min runtime
+        "runtime_ground_minutes": 45,      # 45 min ground runtime
+        "runtime_flight_minutes": 15,      # 15 min flight runtime
     }
 
     FEATURES = [
@@ -343,6 +346,9 @@ class MikroCarrier(IVehicle):
         "voice_control",           # Dictation control system
         "gps_navigation",          # Outdoor GPS support
         "4g_connectivity",         # Remote operation capability
+        "flight_system",           # Quad turbine flight @ 100mph
+        "crash_protection",        # Deployable safety armor layers
+        "water_landing",           # Inflatable emergency raft
     ]
 ```
 
@@ -354,11 +360,15 @@ class MikroCarrier(IVehicle):
 | Base Weight | 8 kg |
 | Payload Capacity | 5 kg |
 | Drive System | 6WD independent motors |
-| Top Speed | 40 km/h |
+| Ground Speed | 40 km/h |
+| **Flight Speed** | **100 mph (160 km/h)** |
+| Flight System | Quad ducted fan turbines |
 | Battery | 6S 10000mAh LiPo |
-| Runtime | 45 minutes |
+| Ground Runtime | 45 minutes |
+| Flight Runtime | 15 minutes |
 | Plane Capacity | 10-20 planes |
 | Compute | Jetson AGX Orin |
+| Safety | Crash armor + Water raft |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -367,6 +377,222 @@ class MikroCarrier(IVehicle):
 - Room for advanced compute (Jetson AGX Orin)
 - Better stability for launching planes while moving
 - Space for voice control microphone array
+- **Room for flight turbines and safety systems**
+
+---
+
+### Module 1.6: Flight System
+
+**Flying Capabilities**:
+The MIKRO-CARRIER can transform from ground vehicle to flying vehicle!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class FlightMode(Enum):
+    GROUND = "ground"           # Wheels on ground, turbines off
+    HOVER = "hover"             # Stationary in air
+    CRUISE = "cruise"           # Forward flight
+    HIGH_SPEED = "high_speed"   # Maximum 100mph flight
+    LANDING = "landing"         # Descending to land
+
+@dataclass
+class FlightState:
+    mode: FlightMode
+    altitude_meters: float      # Current altitude
+    speed_mph: float            # Current airspeed
+    battery_percent: float      # Remaining battery
+    turbine_rpm: list[int]      # RPM for each of 4 turbines
+
+class IFlightSystem(ABC):
+    """Interface for vehicle flight capabilities"""
+
+    @abstractmethod
+    def takeoff(self, target_altitude: float) -> bool:
+        """Launch into the air"""
+        ...
+
+    @abstractmethod
+    def land(self) -> bool:
+        """Return to ground safely"""
+        ...
+
+    @abstractmethod
+    def set_altitude(self, meters: float) -> None:
+        """Adjust flight altitude"""
+        ...
+
+    @abstractmethod
+    def set_speed(self, mph: float) -> None:
+        """Set flight speed (max 100mph)"""
+        ...
+
+    @abstractmethod
+    def get_flight_state(self) -> FlightState:
+        """Get current flight status"""
+        ...
+
+    @abstractmethod
+    def emergency_land(self) -> None:
+        """Immediate safe landing"""
+        ...
+```
+
+**Flight System Hardware**:
+- **Propulsion**: 4x high-power ducted fan turbines (foldable)
+- **Max Speed**: 100 mph (160 km/h)
+- **Max Altitude**: 120 meters (400 feet)
+- **Turbine Power**: 2000W per turbine (8000W total)
+- **Transition Time**: 3 seconds ground-to-air
+- **Stabilization**: 6-axis gyro + GPS + barometer
+- **Turbine Placement**: 4 corners, fold flat when on ground
+
+**Flight Modes**:
+| Mode | Speed | Use Case |
+|------|-------|----------|
+| Hover | 0 mph | Stationary observation |
+| Cruise | 30-50 mph | Normal flight |
+| High Speed | 100 mph | Rapid transit / chase |
+| Landing | 5-10 mph | Safe descent |
+
+**Voice Commands for Flight**:
+- "Take off" - Launch into hover
+- "Fly forward" - Start moving
+- "Go faster" / "Full speed" - Accelerate to 100mph
+- "Land" - Begin landing sequence
+- "Emergency land" - Immediate safe landing
+
+---
+
+### Module 1.7: Safety Systems
+
+**Crash Landing Protection**:
+If the vehicle detects a crash landing, it deploys protective armor layers!
+
+```python
+class CrashSeverity(Enum):
+    MINOR = "minor"           # Small bump, no protection needed
+    MODERATE = "moderate"     # Deploy soft bumpers
+    SEVERE = "severe"         # Deploy full armor shell
+    CRITICAL = "critical"     # Deploy all protection + emergency systems
+
+@dataclass
+class ProtectionStatus:
+    layers_deployed: int       # How many armor layers active (0-3)
+    armor_integrity: float     # 0-100% condition
+    impact_absorbed: float     # Joules absorbed
+    reusable: bool             # Can armor be retracted?
+
+class ICrashProtection(ABC):
+    """Interface for crash landing safety system"""
+
+    @abstractmethod
+    def detect_impact(self) -> CrashSeverity:
+        """Detect incoming crash and severity"""
+        ...
+
+    @abstractmethod
+    def deploy_protection(self, severity: CrashSeverity) -> bool:
+        """Deploy appropriate armor layers"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> ProtectionStatus:
+        """Get protection system status"""
+        ...
+
+    @abstractmethod
+    def retract_armor(self) -> bool:
+        """Retract armor layers after safe landing"""
+        ...
+
+    @abstractmethod
+    def reset_system(self) -> None:
+        """Reset protection system for reuse"""
+        ...
+```
+
+**Crash Protection Hardware**:
+- **Layer 1 - Foam Bumpers**: Soft foam extends around vehicle (minor impacts)
+- **Layer 2 - Airbag Shell**: Inflatable airbags surround the body (moderate impacts)
+- **Layer 3 - Rigid Armor**: Hard shell plates deploy from sides (severe impacts)
+- **Sensors**: Accelerometers detect imminent crash 100ms before impact
+- **Deployment Speed**: Full armor in 50 milliseconds
+- **Reusable**: Foam and airbags retract; armor plates reset
+
+**Protection Layers**:
+| Layer | Type | Protection | Deployment Trigger |
+|-------|------|------------|-------------------|
+| 1 | Foam Bumpers | Scratches, small bumps | <2G impact detected |
+| 2 | Airbag Shell | Moderate crashes | 2-5G impact detected |
+| 3 | Rigid Armor | Hard crashes | >5G impact detected |
+
+---
+
+**Water Landing System**:
+If the vehicle lands in water, an inflatable raft deploys from the bottom!
+
+```python
+@dataclass
+class RaftStatus:
+    deployed: bool              # Is raft inflated?
+    inflation_percent: float    # 0-100% inflated
+    buoyancy_kg: float          # Weight raft can support
+    gps_beacon_active: bool     # Rescue beacon on?
+
+class IWaterLanding(ABC):
+    """Interface for water landing emergency system"""
+
+    @abstractmethod
+    def detect_water(self) -> bool:
+        """Detect water contact"""
+        ...
+
+    @abstractmethod
+    def deploy_raft(self) -> bool:
+        """Inflate emergency raft from bottom"""
+        ...
+
+    @abstractmethod
+    def activate_beacon(self) -> None:
+        """Turn on GPS rescue beacon"""
+        ...
+
+    @abstractmethod
+    def get_raft_status(self) -> RaftStatus:
+        """Get raft deployment status"""
+        ...
+
+    @abstractmethod
+    def deflate_raft(self) -> bool:
+        """Deflate and retract raft after rescue"""
+        ...
+```
+
+**Water Landing Hardware**:
+- **Raft Location**: Folded in waterproof compartment under chassis
+- **Raft Size**: Inflates to 100cm × 60cm × 15cm
+- **Buoyancy**: Supports up to 15kg (vehicle + payload)
+- **Inflation**: CO2 cartridge, inflates in 2 seconds
+- **Material**: Puncture-resistant PVC
+- **Beacon**: GPS + flashing LED for recovery
+- **Water Sensors**: 4 contact sensors on underside
+
+**Water Landing Sequence**:
+1. Water contact detected by sensors
+2. Raft deploys and inflates in 2 seconds
+3. Vehicle floats safely on water
+4. GPS beacon activates for recovery
+5. Bright LED flashes for visibility
+6. Motors shut down to prevent water damage
+
+**Voice Commands for Safety**:
+- "Deploy raft" - Manual raft deployment
+- "Activate beacon" - Turn on rescue signal
+- "Armor up" - Deploy all crash protection
+- "Safety status" - Report protection system status
 
 ### Module 1.5: Vehicle Accessories
 
@@ -379,7 +605,10 @@ mikro_dojo/
         ├── plane_launcher.py      # Plane launcher interface & implementation
         ├── plane_storage.py       # Plane storage bay management
         ├── front_camera.py        # Front camera module
-        └── voice_control.py       # Dictation/voice control system
+        ├── voice_control.py       # Dictation/voice control system
+        ├── flight_system.py       # Quad turbine flight system (100mph)
+        ├── crash_protection.py    # 3-layer crash armor system
+        └── water_landing.py       # Inflatable raft emergency system
 ```
 
 **Plane Launcher Interface**:
