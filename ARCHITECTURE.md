@@ -349,6 +349,7 @@ class MikroCarrier(IVehicle):
         "flight_system",           # Quad turbine flight @ 100mph
         "crash_protection",        # Deployable safety armor layers
         "water_landing",           # Inflatable emergency raft
+        "dual_nerf_turrets",       # 2x retractable nerf guns in headlights
     ]
 ```
 
@@ -369,6 +370,7 @@ class MikroCarrier(IVehicle):
 | Plane Capacity | 10-20 planes |
 | Compute | Jetson AGX Orin |
 | Safety | Crash armor + Water raft |
+| **Nerf Turrets** | **2x (60 darts total)** |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -608,7 +610,8 @@ mikro_dojo/
         ├── voice_control.py       # Dictation/voice control system
         ├── flight_system.py       # Quad turbine flight system (100mph)
         ├── crash_protection.py    # 3-layer crash armor system
-        └── water_landing.py       # Inflatable raft emergency system
+        ├── water_landing.py       # Inflatable raft emergency system
+        └── nerf_turret.py         # Retractable nerf gun turret system
 ```
 
 **Plane Launcher Interface**:
@@ -824,6 +827,157 @@ voice_control:
       arm: ["arm launcher", "prepare to launch", "get ready"]
       fire: ["launch", "fire", "launch plane", "send it"]
       status: ["planes remaining", "how many planes", "ammo check"]
+```
+
+---
+
+**Dual Nerf Turret System**:
+TWO retractable nerf guns that pop out from each side of the headlight area!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class TurretState(Enum):
+    RETRACTED = "retracted"     # Hidden inside headlight housing
+    DEPLOYING = "deploying"     # Extending out
+    READY = "ready"             # Deployed and ready to fire
+    FIRING = "firing"           # Currently shooting
+    RELOADING = "reloading"     # Loading next dart
+    RETRACTING = "retracting"   # Going back inside
+
+@dataclass
+class TurretPosition:
+    pan_degrees: float          # Left/right aim (-45 to +45)
+    tilt_degrees: float         # Up/down aim (-15 to +30)
+    deployed: bool              # Is turret out?
+
+@dataclass
+class AmmoStatus:
+    darts_loaded: int           # Darts in current magazine
+    magazines_remaining: int    # Spare magazines
+    dart_type: str              # "standard", "elite", "mega"
+
+class INerfTurret(ABC):
+    """Interface for retractable nerf gun turret"""
+
+    @abstractmethod
+    def deploy(self) -> bool:
+        """Extend turret from headlight housing"""
+        ...
+
+    @abstractmethod
+    def retract(self) -> bool:
+        """Hide turret back inside headlight housing"""
+        ...
+
+    @abstractmethod
+    def aim(self, pan: float, tilt: float) -> None:
+        """Aim turret (pan: left/right, tilt: up/down)"""
+        ...
+
+    @abstractmethod
+    def fire(self, burst_count: int = 1) -> bool:
+        """Fire nerf darts (1 = single, 3 = burst, -1 = full auto)"""
+        ...
+
+    @abstractmethod
+    def reload(self) -> bool:
+        """Load next magazine"""
+        ...
+
+    @abstractmethod
+    def get_ammo_status(self) -> AmmoStatus:
+        """Get current ammo count"""
+        ...
+
+    @abstractmethod
+    def get_position(self) -> TurretPosition:
+        """Get turret aim position"""
+        ...
+
+    @abstractmethod
+    def auto_aim(self, target_coordinates: tuple) -> None:
+        """Automatically aim at target using camera"""
+        ...
+```
+
+**Dual Nerf Turret Hardware**:
+- **Quantity**: 2 turrets (LEFT and RIGHT)
+- **Location**: Hidden in left and right headlight housings
+- **Deployment**: Motorized slide mechanism, deploys in 1.5 seconds
+- **Magazine Capacity**: 10 darts per magazine per turret
+- **Spare Magazines**: 2 additional magazines per turret (60 darts total!)
+- **Fire Rate**: 3 darts per second per turret (6 darts/sec combined!)
+- **Range**: Up to 15 meters (50 feet)
+- **Aim System**: Each turret: Pan ±45°, Tilt -15° to +30°
+- **Targeting**: Camera-assisted auto-aim, can track 2 targets simultaneously
+- **Sync Mode**: Both turrets can fire together or independently
+
+**Dual Turret Specifications**:
+| Specification | Per Turret | Combined (Both) |
+|---------------|------------|-----------------|
+| Magazine Size | 10 darts | 20 darts |
+| Total Capacity | 30 darts | **60 darts** |
+| Fire Rate | 3 darts/sec | **6 darts/sec** |
+| Range | 15 meters | 15 meters |
+| Pan Range | ±45 degrees | ±45 degrees |
+| Tilt Range | -15° to +30° | -15° to +30° |
+| Deploy Time | 1.5 seconds | 1.5 seconds |
+| Motor | High-torque servo | 2x servos |
+| Flywheel | Dual flywheel | 4 flywheels total |
+
+**Firing Modes**:
+| Mode | Description | Voice Command |
+|------|-------------|---------------|
+| Single | One dart from each turret | "Fire" / "Shoot" |
+| Burst | 3 rapid darts from each | "Burst fire" |
+| Full Auto | Both turrets continuous | "Full auto" / "Unleash" |
+| Alternating | Left-right-left-right | "Alternating fire" |
+| Left Only | Fire left turret only | "Fire left" |
+| Right Only | Fire right turret only | "Fire right" |
+
+**Voice Commands for Dual Nerf Turrets**:
+- "Deploy turrets" - Pop out both nerf guns
+- "Deploy left" / "Deploy right" - Deploy one turret
+- "Retract turrets" - Hide both nerf guns
+- "Aim left" / "Aim right" - Pan both turrets
+- "Aim up" / "Aim down" - Tilt both turrets
+- "Fire" / "Shoot" - Single shot from both
+- "Fire left" / "Fire right" - Fire one turret
+- "Burst fire" - 3-dart burst from both
+- "Full auto" - Empty both magazines
+- "Alternating fire" - Left-right pattern
+- "Reload" - Reload both magazines
+- "Ammo check" - Report remaining darts
+- "Auto aim" - Track targets with camera
+- "Split targets" - Each turret tracks different target
+
+**Dual Turret Configuration**:
+```yaml
+nerf_turrets:
+  enabled: true
+  count: 2
+  turret_left:
+    location: left_headlight
+    magazine_capacity: 10
+    total_magazines: 3
+  turret_right:
+    location: right_headlight
+    magazine_capacity: 10
+    total_magazines: 3
+  dart_type: elite
+  sync_mode: together  # "together", "alternating", "independent"
+  auto_aim:
+    enabled: true
+    tracking_camera: front_camera
+    multi_target: true  # Track 2 targets at once
+    target_detection: color_based
+  safety:
+    max_range_limit: true
+    friendly_fire_prevention: true
+    deploy_speed_limit: 5  # Don't fire while moving fast
 ```
 
 ### Module 2: Perception System
