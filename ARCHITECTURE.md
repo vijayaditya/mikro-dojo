@@ -351,6 +351,11 @@ class MikroCarrier(IVehicle):
         "water_landing",           # Inflatable emergency raft
         "dual_nerf_turrets",       # 2x retractable nerf guns in headlights
         "booster_system",          # Speed boost: 80km/h ground, 150mph air!
+        "gum_dispenser",           # 50 gumballs, 6 flavors, launch or drop!
+        "clone_deployer",          # Deploy mini-clone drones!
+        "robot_bodyguards",        # 2 mini humanoid robot bodyguards!
+        "candy_dispenser",         # 100 pieces, multiple candy types!
+        "speaker_system",          # Play music, sounds, announcements!
     ]
 ```
 
@@ -372,6 +377,10 @@ class MikroCarrier(IVehicle):
 | Compute | Jetson AGX Orin |
 | Safety | Crash armor + Water raft |
 | **Nerf Turrets** | **2x (60 darts total)** |
+| Gum Dispenser | 50 gumballs, 6 flavors |
+| **Clone Drones** | **4 mini-clones!** |
+| Candy Dispenser | 100 pieces, 6 types, climate controlled! |
+| Speaker System | 40W, Bluetooth, TTS announcements! |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -737,7 +746,12 @@ mikro_dojo/
         ├── crash_protection.py    # 3-layer crash armor system
         ├── water_landing.py       # Inflatable raft emergency system
         ├── nerf_turret.py         # Retractable nerf gun turret system
-        └── booster_system.py      # Speed boost for land and air
+        ├── booster_system.py      # Speed boost for land and air
+        ├── gum_dispenser.py       # Gum dispenser system
+        ├── clone_deployer.py      # Mini-clone drone deployment system
+        ├── robot_bodyguards.py    # Mini humanoid robot bodyguards
+        ├── candy_dispenser.py     # Candy dispenser with climate control
+        └── speaker_system.py      # Speaker system for music & effects
 ```
 
 **Plane Launcher Interface**:
@@ -1105,6 +1119,716 @@ nerf_turrets:
     friendly_fire_prevention: true
     deploy_speed_limit: 5  # Don't fire while moving fast
 ```
+
+---
+
+**Gum Dispenser System**:
+A built-in gum dispenser that can drop or launch gumballs!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class GumFlavor(Enum):
+    BUBBLEGUM = "bubblegum"       # Classic pink
+    MINT = "mint"                  # Fresh mint
+    STRAWBERRY = "strawberry"      # Fruity
+    GRAPE = "grape"                # Purple grape
+    WATERMELON = "watermelon"      # Summer favorite
+    MYSTERY = "mystery"            # Random flavor!
+
+class DispenseMode(Enum):
+    DROP = "drop"                  # Gentle drop below vehicle
+    LAUNCH = "launch"              # Launch forward
+    SCATTER = "scatter"            # Multiple gumballs spread out
+
+@dataclass
+class GumInventory:
+    total_gumballs: int            # Total gum remaining
+    flavors: dict[GumFlavor, int]  # Count per flavor
+    dispenser_ready: bool          # Ready to dispense?
+
+class IGumDispenser(ABC):
+    """Interface for gum dispenser system"""
+
+    @abstractmethod
+    def dispense(self, count: int = 1, mode: DispenseMode = DispenseMode.DROP) -> bool:
+        """Dispense gumballs"""
+        ...
+
+    @abstractmethod
+    def select_flavor(self, flavor: GumFlavor) -> bool:
+        """Select which flavor to dispense"""
+        ...
+
+    @abstractmethod
+    def get_inventory(self) -> GumInventory:
+        """Get current gum inventory"""
+        ...
+
+    @abstractmethod
+    def refill(self, flavor: GumFlavor, count: int) -> None:
+        """Refill gumballs"""
+        ...
+
+    @abstractmethod
+    def set_dispense_mode(self, mode: DispenseMode) -> None:
+        """Set how gum is dispensed"""
+        ...
+```
+
+**Gum Dispenser Hardware**:
+- **Location**: Side panel compartment with drop chute
+- **Capacity**: 50 gumballs total
+- **Gumball Size**: Standard 1-inch (2.5cm) diameter
+- **Dispense Rate**: Up to 5 gumballs per second
+- **Launch Distance**: Up to 3 meters when launched
+- **Flavor Sorting**: Automatic color-based sorting
+- **Refill**: Quick-load top hatch
+
+**Gum Dispenser Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Capacity | 50 gumballs |
+| Gumball Size | 1 inch (2.5cm) |
+| Flavors | 6 different flavors |
+| Dispense Rate | 5 per second |
+| Launch Range | 3 meters |
+| Refill Time | 10 seconds |
+
+**Dispense Modes**:
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| Drop | Gentle release below | Leaving a trail |
+| Launch | Forward projection | Sharing with friends |
+| Scatter | Multiple directions | Party mode! |
+
+**Voice Commands for Gum Dispenser**:
+- "Dispense gum" / "Drop gum" - Release one gumball
+- "Gum please" - Polite dispense
+- "Bubblegum" / "Mint" / "Grape" - Select flavor
+- "Mystery flavor" - Random surprise!
+- "Launch gum" - Shoot gumball forward
+- "Scatter gum" - Party scatter mode
+- "Gum count" - Report remaining gumballs
+- "Gum refill needed" - Check if low
+
+**Gum Dispenser Configuration**:
+```yaml
+gum_dispenser:
+  enabled: true
+  location: side_panel
+  capacity: 50
+  gumball_size_cm: 2.5
+  flavors:
+    bubblegum: 10
+    mint: 10
+    strawberry: 10
+    grape: 10
+    watermelon: 5
+    mystery: 5
+  dispense_settings:
+    default_mode: drop
+    launch_power: 50          # Percent power for launch
+    scatter_count: 5          # Gumballs per scatter
+  alerts:
+    low_warning: 10           # Warn when 10 left
+    empty_warning: true
+```
+
+---
+
+**Clone Deployer System**:
+Deploy mini-clone drones that look and act like tiny versions of the MIKRO-CARRIER!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class CloneSize(Enum):
+    MICRO = "micro"            # 10cm - tiny scout
+    MINI = "mini"              # 20cm - standard clone
+    SMALL = "small"            # 30cm - capable clone
+
+class CloneMode(Enum):
+    FOLLOW = "follow"          # Follow the main vehicle
+    SCOUT = "scout"            # Explore ahead
+    GUARD = "guard"            # Circle and protect
+    SWARM = "swarm"            # Coordinated group behavior
+    MIRROR = "mirror"          # Copy main vehicle's movements
+
+@dataclass
+class CloneStatus:
+    clone_id: int              # Unique clone identifier
+    battery_percent: float     # Clone's battery level
+    distance_meters: float     # Distance from main vehicle
+    mode: CloneMode            # Current behavior mode
+    active: bool               # Is clone deployed?
+
+@dataclass
+class CloneFleet:
+    total_clones: int          # How many clones available
+    deployed_clones: int       # How many currently out
+    clones: list[CloneStatus]  # Status of each clone
+
+class ICloneDeployer(ABC):
+    """Interface for mini-clone deployment system"""
+
+    @abstractmethod
+    def deploy_clone(self, mode: CloneMode = CloneMode.FOLLOW) -> int:
+        """Deploy a clone, returns clone ID"""
+        ...
+
+    @abstractmethod
+    def deploy_all(self, mode: CloneMode = CloneMode.SWARM) -> list[int]:
+        """Deploy all available clones"""
+        ...
+
+    @abstractmethod
+    def recall_clone(self, clone_id: int) -> bool:
+        """Recall specific clone back to carrier"""
+        ...
+
+    @abstractmethod
+    def recall_all(self) -> bool:
+        """Recall all clones"""
+        ...
+
+    @abstractmethod
+    def set_clone_mode(self, clone_id: int, mode: CloneMode) -> None:
+        """Change a clone's behavior mode"""
+        ...
+
+    @abstractmethod
+    def get_fleet_status(self) -> CloneFleet:
+        """Get status of all clones"""
+        ...
+
+    @abstractmethod
+    def swarm_command(self, command: str) -> None:
+        """Send command to all deployed clones"""
+        ...
+```
+
+**Clone Drone Hardware**:
+- **Capacity**: 4 mini-clone drones stored in carrier
+- **Clone Size**: 20cm × 12cm × 10cm each
+- **Clone Weight**: 150g each
+- **Clone Speed**: Ground 20 km/h, Air 40 mph
+- **Clone Flight**: Yes! Mini quad-rotors
+- **Clone Battery**: 10 minutes flight time
+- **Clone Camera**: 720p streaming back to carrier
+- **Docking**: Magnetic auto-dock for recharging
+
+**Clone Specifications**:
+| Specification | Per Clone | All 4 Clones |
+|---------------|-----------|--------------|
+| Size | 20cm long | - |
+| Weight | 150g | 600g total |
+| Ground Speed | 20 km/h | - |
+| Air Speed | 40 mph | - |
+| Flight Time | 10 minutes | - |
+| Camera | 720p | 4 viewpoints! |
+| Range | 100 meters | - |
+
+**Clone Behavior Modes**:
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| Follow | Stay behind main vehicle | Escort formation |
+| Scout | Fly ahead and report back | Exploration |
+| Guard | Circle around carrier | Protection |
+| Swarm | Coordinated group patterns | Show off! |
+| Mirror | Copy carrier's movements | Synchronized action |
+
+**Voice Commands for Clone Deployer**:
+- "Deploy clone" - Launch one clone
+- "Deploy all clones" - Launch entire fleet
+- "Recall clone" / "Come back" - Recall clones
+- "Clones follow me" - Follow mode
+- "Clones scout ahead" - Scout mode
+- "Clones guard" - Guard formation
+- "Clones swarm" - Swarm pattern
+- "Clones mirror" - Mirror movements
+- "Clone status" - Report fleet status
+- "Clone 1 scout" / "Clone 2 follow" - Individual commands
+
+**Clone Deployer Configuration**:
+```yaml
+clone_deployer:
+  enabled: true
+  capacity: 4
+  clone_specs:
+    size_cm: 20
+    weight_g: 150
+    ground_speed_kmh: 20
+    air_speed_mph: 40
+    flight_time_minutes: 10
+    camera_resolution: 720p
+    range_meters: 100
+  docking:
+    location: rear_bay
+    auto_dock: true
+    charge_time_minutes: 15
+  behavior:
+    default_mode: follow
+    formation_spacing_meters: 2
+    swarm_pattern: diamond
+    collision_avoidance: true
+  communication:
+    frequency: "2.4GHz"
+    video_streaming: true
+    telemetry_rate_hz: 10
+```
+
+**Clone Fleet Formations**:
+```
+DIAMOND:          LINE:            SPREAD:
+    1               1 2 3 4          1       4
+   2 3                               2   C   3
+    4
+    C                   C            (C = Carrier)
+```
+
+---
+
+**Robot Bodyguard System**:
+Two mini humanoid robot bodyguards that deploy from the sides of the vehicle!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class BodyguardPosition(Enum):
+    LEFT = "left"              # Left side of vehicle
+    RIGHT = "right"            # Right side of vehicle
+
+class BodyguardStance(Enum):
+    DOCKED = "docked"          # Stored inside vehicle
+    STANDING = "standing"      # Standing guard
+    WALKING = "walking"        # Moving alongside
+    DEFENDING = "defending"    # Active defense pose
+    DANCING = "dancing"        # Fun mode!
+    WAVING = "waving"          # Friendly greeting
+
+@dataclass
+class BodyguardStatus:
+    position: BodyguardPosition  # Left or right
+    stance: BodyguardStance      # Current pose/action
+    battery_percent: float       # Battery level
+    distance_from_vehicle: float # How far from carrier
+    arm_position: str            # "down", "up", "crossed", "waving"
+
+class IRobotBodyguard(ABC):
+    """Interface for mini humanoid robot bodyguards"""
+
+    @abstractmethod
+    def deploy(self, position: BodyguardPosition) -> bool:
+        """Deploy bodyguard from side compartment"""
+        ...
+
+    @abstractmethod
+    def deploy_both(self) -> bool:
+        """Deploy both bodyguards"""
+        ...
+
+    @abstractmethod
+    def dock(self, position: BodyguardPosition) -> bool:
+        """Return bodyguard to vehicle"""
+        ...
+
+    @abstractmethod
+    def dock_both(self) -> bool:
+        """Dock both bodyguards"""
+        ...
+
+    @abstractmethod
+    def set_stance(self, position: BodyguardPosition, stance: BodyguardStance) -> None:
+        """Set bodyguard pose/action"""
+        ...
+
+    @abstractmethod
+    def walk_with_vehicle(self) -> None:
+        """Bodyguards walk alongside moving vehicle"""
+        ...
+
+    @abstractmethod
+    def get_status(self, position: BodyguardPosition) -> BodyguardStatus:
+        """Get bodyguard status"""
+        ...
+
+    @abstractmethod
+    def perform_action(self, action: str) -> None:
+        """Special actions: wave, salute, dance, high-five"""
+        ...
+```
+
+**Robot Bodyguard Hardware**:
+- **Quantity**: 2 bodyguards (LEFT and RIGHT)
+- **Storage**: Side compartments that slide open
+- **Height**: 25cm tall (humanoid form)
+- **Weight**: 300g each
+- **Joints**: 12 servo motors per robot (articulated limbs)
+- **Walking Speed**: Matches vehicle up to 5 km/h
+- **Battery**: 30 minutes active time
+- **Recharge**: Auto-charge when docked
+
+**Bodyguard Specifications**:
+| Specification | Per Bodyguard | Both |
+|---------------|---------------|------|
+| Height | 25cm | - |
+| Weight | 300g | 600g |
+| Joints | 12 servos | 24 servos |
+| Walking Speed | 5 km/h | - |
+| Battery Life | 30 minutes | - |
+| Arm Reach | 8cm | - |
+| Head Movement | Pan/tilt | - |
+
+**Bodyguard Actions**:
+| Action | Description | Voice Command |
+|--------|-------------|---------------|
+| Stand Guard | Stand at attention beside vehicle | "Guards stand" |
+| Walk | Walk alongside moving vehicle | "Guards walk" |
+| Wave | Friendly wave gesture | "Guards wave" |
+| Salute | Military salute | "Guards salute" |
+| Dance | Fun dance moves | "Guards dance" |
+| High-Five | Reach out for high-five | "High five" |
+| Defend | Defensive stance | "Guards defend" |
+| Cross Arms | Cool crossed-arms pose | "Guards cross arms" |
+
+**Voice Commands for Robot Bodyguards**:
+- "Deploy guards" - Both bodyguards emerge from sides
+- "Deploy left guard" / "Deploy right guard" - One at a time
+- "Guards return" / "Dock guards" - Return to vehicle
+- "Guards stand" - Standing guard pose
+- "Guards walk with me" - Walk alongside
+- "Guards wave" - Friendly wave
+- "Guards dance" - Party mode!
+- "Guards salute" - Military salute
+- "Guards high-five" - High-five pose
+- "Guard status" - Check battery and status
+
+**Bodyguard Configuration**:
+```yaml
+robot_bodyguards:
+  enabled: true
+  count: 2
+  left_guard:
+    storage: left_side_panel
+    color: blue
+    personality: serious
+  right_guard:
+    storage: right_side_panel
+    color: red
+    personality: friendly
+  specs:
+    height_cm: 25
+    weight_g: 300
+    joints: 12
+    walk_speed_kmh: 5
+    battery_minutes: 30
+  behaviors:
+    auto_deploy_on_stop: false
+    walk_with_vehicle: true
+    max_distance_meters: 3
+    return_on_low_battery: true
+  actions:
+    wave_duration_seconds: 3
+    dance_moves: ["robot", "shuffle", "spin"]
+    salute_style: military
+```
+
+**Bodyguard Formation**:
+```
+      [CARRIER]
+   🤖          🤖
+  LEFT        RIGHT
+ GUARD       GUARD
+```
+
+---
+
+**Candy Dispenser System**:
+A sweet treat dispenser that can drop or launch various candies!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class CandyType(Enum):
+    CHOCOLATE = "chocolate"        # Mini chocolate pieces
+    GUMMY_BEARS = "gummy_bears"    # Gummy bear candies
+    LOLLIPOP = "lollipop"          # Mini lollipops
+    HARD_CANDY = "hard_candy"      # Wrapped hard candies
+    SOUR_CANDY = "sour_candy"      # Sour gummy worms
+    JELLY_BEANS = "jelly_beans"    # Assorted jelly beans
+
+class CandyDispenseMode(Enum):
+    DROP = "drop"                  # Gentle drop below vehicle
+    TOSS = "toss"                  # Gentle toss forward
+    LAUNCH = "launch"              # Launch with more power
+    RAIN = "rain"                  # Multiple candies scattered
+
+@dataclass
+class CandyInventory:
+    total_pieces: int              # Total candy remaining
+    candy_types: dict[CandyType, int]  # Count per type
+    dispenser_ready: bool          # Ready to dispense?
+    temperature_ok: bool           # Chocolate not melted?
+
+class ICandyDispenser(ABC):
+    """Interface for candy dispenser system"""
+
+    @abstractmethod
+    def dispense(self, count: int = 1, mode: CandyDispenseMode = CandyDispenseMode.DROP) -> bool:
+        """Dispense candies"""
+        ...
+
+    @abstractmethod
+    def select_candy(self, candy_type: CandyType) -> bool:
+        """Select which candy type to dispense"""
+        ...
+
+    @abstractmethod
+    def get_inventory(self) -> CandyInventory:
+        """Get current candy inventory"""
+        ...
+
+    @abstractmethod
+    def refill(self, candy_type: CandyType, count: int) -> None:
+        """Refill candies"""
+        ...
+
+    @abstractmethod
+    def set_dispense_mode(self, mode: CandyDispenseMode) -> None:
+        """Set how candy is dispensed"""
+        ...
+
+    @abstractmethod
+    def check_temperature(self) -> bool:
+        """Check if compartment is cool enough for chocolate"""
+        ...
+```
+
+**Candy Dispenser Hardware**:
+- **Location**: Rear panel compartment with climate control
+- **Capacity**: 100 candy pieces total
+- **Compartments**: 6 separate compartments (one per candy type)
+- **Dispense Rate**: Up to 10 pieces per second
+- **Launch Distance**: Up to 5 meters when launched
+- **Climate Control**: Cooling system to keep chocolate from melting
+- **Refill**: Quick-load drawer system
+
+**Candy Dispenser Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Capacity | 100 pieces |
+| Candy Types | 6 different types |
+| Compartments | 6 separate |
+| Dispense Rate | 10 per second |
+| Launch Range | 5 meters |
+| Climate Control | Active cooling |
+| Temperature Range | 15-20°C (chocolate safe) |
+
+**Dispense Modes**:
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| Drop | Gentle release below | Leaving a trail |
+| Toss | Soft forward throw | Sharing nearby |
+| Launch | Powered projection | Sharing far away |
+| Rain | Multiple candies | Party celebration! |
+
+**Voice Commands for Candy Dispenser**:
+- "Dispense candy" / "Drop candy" - Release one candy
+- "Candy please" - Polite dispense
+- "Chocolate" / "Gummy bears" / "Lollipop" - Select type
+- "Jelly beans" / "Sour candy" / "Hard candy" - Select type
+- "Launch candy" - Shoot candy forward
+- "Candy rain" - Party mode!
+- "Candy count" - Report remaining candies
+- "Chocolate check" - Check if chocolate is okay
+
+**Candy Dispenser Configuration**:
+```yaml
+candy_dispenser:
+  enabled: true
+  location: rear_panel
+  capacity: 100
+  climate_control:
+    enabled: true
+    target_temp_celsius: 18
+    max_temp_celsius: 22
+  compartments:
+    chocolate: 20
+    gummy_bears: 20
+    lollipop: 15
+    hard_candy: 15
+    sour_candy: 15
+    jelly_beans: 15
+  dispense_settings:
+    default_mode: drop
+    launch_power: 60
+    rain_count: 10
+  alerts:
+    low_warning: 15
+    temperature_warning: true
+    empty_warning: true
+```
+
+---
+
+**Speaker System**:
+A powerful speaker system for music, sound effects, and announcements!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class SoundType(Enum):
+    MUSIC = "music"                # Play music tracks
+    EFFECT = "effect"              # Sound effects
+    VOICE = "voice"                # Voice announcements
+    HORN = "horn"                  # Vehicle horn sounds
+    ALARM = "alarm"                # Warning/alert sounds
+
+class SpeakerMode(Enum):
+    NORMAL = "normal"              # Standard volume
+    LOUD = "loud"                  # Maximum volume
+    QUIET = "quiet"                # Low volume
+    BASS_BOOST = "bass_boost"      # Extra bass
+    SURROUND = "surround"          # Surround sound effect
+
+@dataclass
+class SpeakerStatus:
+    playing: bool                  # Currently playing audio?
+    volume_percent: int            # Current volume (0-100)
+    track_name: str                # Currently playing track
+    battery_draw_watts: float      # Power consumption
+    mode: SpeakerMode              # Current speaker mode
+
+class ISpeakerSystem(ABC):
+    """Interface for speaker system"""
+
+    @abstractmethod
+    def play_music(self, track: str) -> bool:
+        """Play a music track"""
+        ...
+
+    @abstractmethod
+    def play_sound_effect(self, effect: str) -> bool:
+        """Play a sound effect"""
+        ...
+
+    @abstractmethod
+    def announce(self, message: str) -> bool:
+        """Text-to-speech announcement"""
+        ...
+
+    @abstractmethod
+    def honk(self, pattern: str = "short") -> None:
+        """Sound the horn"""
+        ...
+
+    @abstractmethod
+    def set_volume(self, percent: int) -> None:
+        """Set speaker volume (0-100)"""
+        ...
+
+    @abstractmethod
+    def set_mode(self, mode: SpeakerMode) -> None:
+        """Set speaker mode"""
+        ...
+
+    @abstractmethod
+    def stop(self) -> None:
+        """Stop all audio"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> SpeakerStatus:
+        """Get speaker status"""
+        ...
+```
+
+**Speaker System Hardware**:
+- **Speakers**: 2x 10W full-range speakers + 1x 20W subwoofer
+- **Total Power**: 40W RMS
+- **Frequency Range**: 60Hz - 20kHz
+- **Amplifier**: Class D digital amplifier
+- **Storage**: 8GB for music and sound effects
+- **Bluetooth**: Yes, for streaming from phone
+- **Location**: Side-mounted speakers, rear subwoofer
+
+**Speaker Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Total Power | 40W RMS |
+| Speakers | 2x 10W + 1x 20W sub |
+| Frequency Range | 60Hz - 20kHz |
+| Max Volume | 95 dB |
+| Bluetooth | Yes (5.0) |
+| Storage | 8GB onboard |
+| Waterproof | IPX4 splash resistant |
+
+**Pre-loaded Sound Effects**:
+| Category | Examples |
+|----------|----------|
+| Horns | Car horn, truck horn, musical horn |
+| Engines | Sports car, race car, jet engine |
+| Fun | Laser, explosion, victory fanfare |
+| Animals | Dog bark, lion roar, eagle |
+| Music | Victory theme, action music, chase music |
+| Alerts | Warning beep, alarm, siren |
+
+**Voice Commands for Speaker**:
+- "Play music" - Start playing music
+- "Play [track name]" - Play specific track
+- "Stop music" / "Quiet" - Stop playing
+- "Volume up" / "Louder" - Increase volume
+- "Volume down" / "Softer" - Decrease volume
+- "Maximum volume" - Full volume
+- "Honk" / "Horn" - Sound the horn
+- "Play engine sound" - Engine sound effect
+- "Victory music" - Play celebration music
+- "Announce [message]" - Text-to-speech
+- "Bass boost" - Enable bass boost mode
+
+**Speaker Configuration**:
+```yaml
+speaker_system:
+  enabled: true
+  speakers:
+    left: 10W
+    right: 10W
+    subwoofer: 20W
+  amplifier: class_d
+  default_volume: 50
+  max_volume: 100
+  bluetooth:
+    enabled: true
+    name: "MIKRO-CARRIER-SPEAKER"
+  storage_gb: 8
+  preloaded_sounds:
+    horns: ["car", "truck", "musical", "train"]
+    engines: ["sports_car", "race_car", "jet", "spaceship"]
+    effects: ["laser", "explosion", "victory", "coin"]
+    music: ["action", "chase", "victory", "chill"]
+  text_to_speech:
+    enabled: true
+    voice: "default"
+    language: "en-US"
+  horn_patterns:
+    short: [200]              # 200ms honk
+    long: [1000]              # 1 second honk
+    double: [200, 100, 200]   # Two short honks
+    shave_and_haircut: [200, 100, 200, 100, 400, 200, 400]
+```
+
+---
 
 ### Module 2: Perception System
 
