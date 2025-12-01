@@ -255,7 +255,8 @@ mikro_dojo/
     │   ├── base_rc_car.py   # Base RC car implementation
     │   ├── traxxas_slash.py # Traxxas Slash 4x4
     │   ├── arrma_granite.py # Arrma Granite
-    │   └── wltoys_124019.py # Budget option
+    │   ├── wltoys_124019.py # Budget option
+    │   └── mikro_carrier.py # Large carrier vehicle with plane storage
     │
     ├── arenas/
     │   ├── base_arena.py    # Base arena implementation
@@ -313,6 +314,60 @@ class IVehicle(ABC):
     def capabilities(self) -> dict: ...
 ```
 
+**Large Vehicle: MIKRO-CARRIER**
+
+For missions requiring high plane capacity and extended operations, the MIKRO-CARRIER is a larger vehicle platform:
+
+```python
+@VehicleRegistry.register("mikro_carrier")
+class MikroCarrier(IVehicle):
+    """Large carrier vehicle with integrated plane storage and launcher"""
+
+    SPECIFICATIONS = {
+        "scale": "1/5",                    # Larger than standard 1/10
+        "length_cm": 80,                   # 80cm long
+        "width_cm": 45,                    # 45cm wide
+        "height_cm": 35,                   # 35cm tall (with launcher)
+        "weight_kg": 8.0,                  # 8kg base weight
+        "payload_kg": 5.0,                 # 5kg payload capacity
+        "max_speed_kmh": 40,               # 40 km/h max speed
+        "drive": "6WD",                    # 6-wheel drive for stability
+        "battery": "6S 10000mAh LiPo",     # Large battery
+        "runtime_minutes": 45,             # 45 min runtime
+    }
+
+    FEATURES = [
+        "plane_storage_bay",       # Rear cargo bay for 10-20 planes
+        "roof_launcher",           # Electromagnetic catapult launcher
+        "front_camera",            # Wide-angle stereo camera
+        "voice_control",           # Dictation control system
+        "gps_navigation",          # Outdoor GPS support
+        "4g_connectivity",         # Remote operation capability
+    ]
+```
+
+**MIKRO-CARRIER Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Scale | 1/5 (larger than standard) |
+| Dimensions | 80cm × 45cm × 35cm |
+| Base Weight | 8 kg |
+| Payload Capacity | 5 kg |
+| Drive System | 6WD independent motors |
+| Top Speed | 40 km/h |
+| Battery | 6S 10000mAh LiPo |
+| Runtime | 45 minutes |
+| Plane Capacity | 10-20 planes |
+| Compute | Jetson AGX Orin |
+
+**Why Bigger?**
+- More space for plane storage magazine (10-20 planes)
+- Larger battery for extended missions
+- More powerful motors to carry payload
+- Room for advanced compute (Jetson AGX Orin)
+- Better stability for launching planes while moving
+- Space for voice control microphone array
+
 ### Module 1.5: Vehicle Accessories
 
 **Plane Launcher Module**:
@@ -322,7 +377,9 @@ mikro_dojo/
     └── accessories/
         ├── __init__.py
         ├── plane_launcher.py      # Plane launcher interface & implementation
-        └── front_camera.py        # Front camera module
+        ├── plane_storage.py       # Plane storage bay management
+        ├── front_camera.py        # Front camera module
+        └── voice_control.py       # Dictation/voice control system
 ```
 
 **Plane Launcher Interface**:
@@ -386,12 +443,12 @@ class IPlaneLauncher(ABC):
 
 **Launcher Hardware Specifications**:
 - **Mounting**: Roof-mounted rail system with quick-release
-- **Capacity**: 1-3 planes depending on model
-- **Launch Mechanism**: Spring-loaded or compressed air
-- **Launch Angle**: Adjustable 0-45 degrees via servo
-- **Power Source**: Shared with vehicle or independent LiPo
-- **Weight**: <200g including one plane
-- **Trigger**: Electronic servo-actuated release
+- **Capacity**: 10-20 planes (fed from storage bay)
+- **Launch Mechanism**: Electromagnetic catapult or compressed air cannon
+- **Launch Angle**: Adjustable 0-60 degrees via high-torque servo
+- **Power Source**: Dedicated high-capacity LiPo (4S-6S)
+- **Fire Rate**: Up to 2 planes per second in rapid mode
+- **Trigger**: Electronic servo-actuated release with voice activation support
 
 **Supported Plane Types**:
 | Type | Weight | Wingspan | Flight Time | Use Case |
@@ -399,6 +456,42 @@ class IPlaneLauncher(ABC):
 | Foam Glider | 20-50g | 30-50cm | 10-30s glide | Basic aerial observation |
 | Powered Mini | 50-100g | 40-60cm | 2-5 min | Extended reconnaissance |
 | FPV Micro | 80-150g | 50-80cm | 3-8 min | First-person view missions |
+
+**Plane Storage Bay**:
+```python
+@dataclass
+class StorageBayConfig:
+    capacity: int             # 10-20 planes
+    plane_type: str           # Type of planes stored
+    auto_reload: bool         # Automatic feeding to launcher
+    climate_controlled: bool  # Temperature regulation for batteries
+
+class IPlaneStorage(ABC):
+    """Interface for plane storage management"""
+
+    @abstractmethod
+    def get_inventory(self) -> list[PlaneConfig]:
+        """Get list of stored planes"""
+        ...
+
+    @abstractmethod
+    def feed_to_launcher(self) -> bool:
+        """Transfer plane from storage to launcher"""
+        ...
+
+    @abstractmethod
+    def get_capacity(self) -> tuple[int, int]:
+        """Return (current_count, max_capacity)"""
+        ...
+```
+
+**Storage Hardware Specifications**:
+- **Location**: Rear cargo bay with conveyor feed system
+- **Capacity**: 10-20 planes in stacked magazine configuration
+- **Auto-Feed**: Motorized conveyor belt to launcher
+- **Plane Protection**: Foam-lined compartments prevent damage
+- **Status Indicators**: LED display showing plane count
+- **Quick Reload**: Slide-out magazine for fast reloading
 
 **Front Camera Module**:
 The vehicle includes a forward-facing camera system for:
@@ -413,6 +506,96 @@ The vehicle includes a forward-facing camera system for:
 - **Field of View**: 90-120 degrees horizontal
 - **Mounting**: Hood-mounted or bumper-integrated
 - **Features**: Low-light capable, global shutter preferred
+
+**Voice Control / Dictation System**:
+Control the car using your voice! Speak commands naturally and the car responds.
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class VoiceCommandType(Enum):
+    MOVEMENT = "movement"       # "go forward", "turn left", "stop"
+    SPEED = "speed"             # "go faster", "slow down", "full speed"
+    LAUNCHER = "launcher"       # "launch plane", "arm launcher", "fire"
+    SKILL = "skill"             # "do a drift", "parallel park", "donut"
+    QUERY = "query"             # "how many planes left?", "battery status?"
+
+@dataclass
+class VoiceCommand:
+    raw_text: str               # Original spoken text
+    command_type: VoiceCommandType
+    action: str                 # Parsed action
+    parameters: dict            # Extracted parameters
+    confidence: float           # Recognition confidence (0-1)
+
+class IVoiceControl(ABC):
+    """Interface for dictation/voice control"""
+
+    @abstractmethod
+    def start_listening(self) -> None:
+        """Begin listening for voice commands"""
+        ...
+
+    @abstractmethod
+    def stop_listening(self) -> None:
+        """Stop listening"""
+        ...
+
+    @abstractmethod
+    def process_audio(self, audio_data: bytes) -> VoiceCommand:
+        """Process audio and return parsed command"""
+        ...
+
+    @abstractmethod
+    def get_supported_commands(self) -> list[str]:
+        """Return list of supported voice commands"""
+        ...
+
+    @abstractmethod
+    def set_wake_word(self, word: str) -> None:
+        """Set custom wake word (e.g., 'Hey Car', 'OK Racer')"""
+        ...
+```
+
+**Voice Control Hardware**:
+- **Microphone**: Directional MEMS microphone array (2-4 mics)
+- **Processing**: On-device speech recognition (Whisper/Vosk)
+- **Wake Word**: Customizable ("Hey Car", "OK Racer", etc.)
+- **Noise Cancellation**: Active noise filtering for outdoor use
+- **Response**: Speaker for audio feedback and confirmations
+
+**Supported Voice Commands**:
+| Category | Example Commands |
+|----------|------------------|
+| Movement | "go forward", "turn left", "turn right", "reverse", "stop" |
+| Speed | "go faster", "slow down", "half speed", "full speed" |
+| Launcher | "arm launcher", "launch plane", "fire", "launch all" |
+| Skills | "do a drift", "do a donut", "parallel park", "slalom" |
+| Status | "battery level", "how many planes", "speed check" |
+
+**Voice Control Integration**:
+```yaml
+voice_control:
+  enabled: true
+  wake_word: "hey car"
+  language: "en-US"
+  sensitivity: 0.7
+  continuous_listening: false
+  confirmation_audio: true
+  commands:
+    movement:
+      forward: ["go forward", "drive", "move ahead", "go"]
+      backward: ["reverse", "go back", "back up"]
+      left: ["turn left", "go left", "left"]
+      right: ["turn right", "go right", "right"]
+      stop: ["stop", "halt", "freeze", "brake"]
+    launcher:
+      arm: ["arm launcher", "prepare to launch", "get ready"]
+      fire: ["launch", "fire", "launch plane", "send it"]
+      status: ["planes remaining", "how many planes", "ammo check"]
+```
 
 ### Module 2: Perception System
 
@@ -717,6 +900,11 @@ class TraxxasSlash(IVehicle):
 @VehicleRegistry.register("arrma_granite")
 class ArrmaGranite(IVehicle):
     ...
+
+@VehicleRegistry.register("mikro_carrier")
+class MikroCarrier(IVehicle):
+    """Large 1/5 scale carrier with plane storage and voice control"""
+    ...
 ```
 
 ---
@@ -821,6 +1009,40 @@ vehicles:
         type: monocular
         resolution: 1080p
         fps: 60
+
+  # Large carrier vehicle with full plane launching capabilities
+  - id: carrier_one
+    type: mikro_carrier
+    arena: home_arena
+    connection:
+      type: wifi
+      ip: 192.168.1.102
+    sensors:
+      imu: bno085
+      camera: stereo_csi
+      gps: ublox_m9n
+    accessories:
+      front_camera:
+        enabled: true
+        type: wide_angle_stereo
+        resolution: 1080p
+        fps: 60
+      plane_launcher:
+        enabled: true
+        type: electromagnetic_catapult
+        capacity: 20
+        plane_type: foam_glider
+        auto_reload: true
+      plane_storage:
+        enabled: true
+        capacity: 20
+        auto_feed: true
+        magazine_type: stacked
+      voice_control:
+        enabled: true
+        wake_word: "hey carrier"
+        language: "en-US"
+        continuous_listening: true
 ```
 
 ---
