@@ -361,6 +361,8 @@ class MikroCarrier(IVehicle):
         "atm_machine",             # Withdraw cash on the go!
         "vending_machine",         # Snacks and drinks on the go!
         "controller_ai",           # AI assistant on the controller!
+        "icee_machine",            # Frozen ICEE slushie dispenser!
+        "tv_screen",               # TV screen above the ICEE machine!
     ]
 ```
 
@@ -391,6 +393,8 @@ class MikroCarrier(IVehicle):
 | ATM Machine | Withdraw cash anywhere! |
 | Vending Machine | Snacks & drinks dispenser! |
 | Controller AI | Smart AI assistant on controller! |
+| ICEE Machine | Frozen slushie drinks! |
+| TV Screen | Watch shows above the ICEE machine! |
 
 **Why Bigger?**
 - More space for plane storage magazine (10-20 planes)
@@ -766,7 +770,9 @@ mikro_dojo/
         ├── toilet_feature.py      # Emergency toilet system
         ├── atm_machine.py         # Mobile ATM for cash withdrawals
         ├── vending_machine.py     # Snacks & drinks vending machine
-        └── controller_ai.py       # AI assistant on the controller
+        ├── controller_ai.py       # AI assistant on the controller
+        ├── icee_machine.py        # Frozen ICEE slushie dispenser
+        └── tv_screen.py           # TV screen above ICEE machine
 ```
 
 **Plane Launcher Interface**:
@@ -2556,6 +2562,329 @@ AI: "Alright! Try to drive through all 5 gates in under
 User: "Be funny"
 AI: "Switching to comedy mode! Warning: my jokes may cause
      excessive eye-rolling. Side effects include groaning."
+```
+
+---
+
+**ICEE Machine**:
+A frozen slushie dispenser for refreshing ICEE drinks on the go!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class ICEEFlavor(Enum):
+    CHERRY = "cherry"              # Classic red cherry
+    BLUE_RASPBERRY = "blue_raspberry"  # Blue raspberry
+    COLA = "cola"                  # Coca-Cola flavor
+    GRAPE = "grape"                # Purple grape
+    LEMON_LIME = "lemon_lime"      # Sprite/7-Up style
+    MYSTERY = "mystery"            # Mix of flavors!
+
+class CupSize(Enum):
+    SMALL = "small"                # 8 oz
+    MEDIUM = "medium"              # 12 oz
+    LARGE = "large"                # 16 oz
+
+@dataclass
+class ICEEStatus:
+    machine_on: bool               # Is machine running?
+    temperature_celsius: float     # Current temp (should be -2 to -4°C)
+    flavors_available: dict[ICEEFlavor, int]  # Syrup levels per flavor
+    ice_level_percent: int         # Ice/slush level
+    cups_remaining: int            # Disposable cups left
+    ready_to_dispense: bool        # Ready for serving?
+
+class IICEEMachine(ABC):
+    """Interface for ICEE slushie machine"""
+
+    @abstractmethod
+    def power_on(self) -> bool:
+        """Turn on the ICEE machine"""
+        ...
+
+    @abstractmethod
+    def power_off(self) -> bool:
+        """Turn off the ICEE machine"""
+        ...
+
+    @abstractmethod
+    def dispense(self, flavor: ICEEFlavor, size: CupSize) -> bool:
+        """Dispense an ICEE drink"""
+        ...
+
+    @abstractmethod
+    def mix_flavors(self, flavors: list[ICEEFlavor], size: CupSize) -> bool:
+        """Dispense a mixed flavor ICEE"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> ICEEStatus:
+        """Get machine status"""
+        ...
+
+    @abstractmethod
+    def refill_syrup(self, flavor: ICEEFlavor) -> None:
+        """Refill a flavor syrup"""
+        ...
+
+    @abstractmethod
+    def refill_cups(self, count: int) -> None:
+        """Refill disposable cups"""
+        ...
+
+    @abstractmethod
+    def clean_nozzles(self) -> None:
+        """Run cleaning cycle"""
+        ...
+```
+
+**ICEE Machine Hardware**:
+- **Location**: Side panel with dispensing nozzle
+- **Capacity**: 2 liters of slush per flavor
+- **Flavors**: 6 flavor tanks
+- **Freezing**: Compressor cooling system
+- **Temperature**: Maintains -2 to -4°C
+- **Cup Dispenser**: Holds 20 cups (small/medium/large)
+- **Nozzles**: 2 dispensing nozzles for mixing
+
+**ICEE Machine Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Flavor Tanks | 6 × 2L each |
+| Total Capacity | 12 liters |
+| Temperature | -2 to -4°C |
+| Cup Sizes | 8oz, 12oz, 16oz |
+| Cups Stored | 20 cups |
+| Cooling | Mini compressor |
+| Power | 60W cooling system |
+
+**Available Flavors**:
+| Flavor | Color | Description |
+|--------|-------|-------------|
+| Cherry | Red | Classic sweet cherry |
+| Blue Raspberry | Blue | Tangy blue raspberry |
+| Cola | Brown | Coca-Cola taste |
+| Grape | Purple | Sweet grape |
+| Lemon-Lime | Green | Citrus refreshing |
+| Mystery | Rainbow | Mix surprise! |
+
+**Voice Commands for ICEE Machine**:
+- "ICEE please" / "Slushie" - Dispense default flavor
+- "Cherry ICEE" / "Blue raspberry" - Specific flavor
+- "Large ICEE" / "Small slushie" - Specify size
+- "Mix cherry and blue" - Mixed flavor
+- "ICEE status" - Check syrup and ice levels
+- "How many cups left?" - Check cup count
+
+**ICEE Machine Configuration**:
+```yaml
+icee_machine:
+  enabled: true
+  location: side_panel
+  cooling:
+    type: compressor
+    target_temp_celsius: -3
+    power_watts: 60
+  tanks:
+    capacity_liters: 2
+    flavors:
+      cherry: 100
+      blue_raspberry: 100
+      cola: 100
+      grape: 100
+      lemon_lime: 100
+      mystery: 100
+  cups:
+    capacity: 20
+    sizes: [small, medium, large]
+  dispensing:
+    nozzles: 2
+    allow_mixing: true
+    default_size: medium
+    default_flavor: cherry
+  maintenance:
+    auto_clean_interval_hours: 24
+    low_syrup_warning: 20
+    low_cups_warning: 5
+```
+
+---
+
+**TV Screen**:
+A mounted TV screen above the ICEE machine for entertainment!
+
+```python
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+
+class TVInput(Enum):
+    STREAMING = "streaming"        # Netflix, YouTube, etc.
+    VEHICLE_CAMERA = "vehicle_cam" # Live camera feeds
+    GAMES = "games"                # Built-in games
+    MEDIA_PLAYER = "media"         # USB/SD card media
+    MIRROR = "mirror"              # Phone screen mirroring
+
+class TVState(Enum):
+    OFF = "off"                    # Screen off
+    ON = "on"                      # Screen on
+    STANDBY = "standby"            # Low power mode
+    SCREENSAVER = "screensaver"    # Screensaver active
+
+@dataclass
+class TVStatus:
+    state: TVState                 # Current state
+    input_source: TVInput          # Current input
+    volume: int                    # Volume level (0-100)
+    brightness: int                # Brightness (0-100)
+    current_content: str           # What's playing
+    wifi_connected: bool           # Connected to internet?
+
+class ITVScreen(ABC):
+    """Interface for TV screen system"""
+
+    @abstractmethod
+    def power_on(self) -> bool:
+        """Turn on the TV"""
+        ...
+
+    @abstractmethod
+    def power_off(self) -> bool:
+        """Turn off the TV"""
+        ...
+
+    @abstractmethod
+    def set_input(self, source: TVInput) -> None:
+        """Change input source"""
+        ...
+
+    @abstractmethod
+    def set_volume(self, level: int) -> None:
+        """Set volume (0-100)"""
+        ...
+
+    @abstractmethod
+    def set_brightness(self, level: int) -> None:
+        """Set brightness (0-100)"""
+        ...
+
+    @abstractmethod
+    def play_content(self, content: str) -> bool:
+        """Play specific content"""
+        ...
+
+    @abstractmethod
+    def get_status(self) -> TVStatus:
+        """Get TV status"""
+        ...
+
+    @abstractmethod
+    def mirror_phone(self) -> bool:
+        """Enable phone screen mirroring"""
+        ...
+
+    @abstractmethod
+    def show_camera(self, camera_id: str) -> None:
+        """Show vehicle camera feed"""
+        ...
+```
+
+**TV Screen Hardware**:
+- **Location**: Mounted above ICEE machine
+- **Display**: 7-inch IPS LCD
+- **Resolution**: 1280 × 800 (HD)
+- **Brightness**: 500 nits (outdoor visible)
+- **Speakers**: Built-in 2W stereo speakers
+- **Connectivity**: WiFi, Bluetooth, HDMI-in
+- **Storage**: 16GB for downloaded content
+
+**TV Screen Specifications**:
+| Specification | Value |
+|---------------|-------|
+| Screen Size | 7 inches |
+| Resolution | 1280 × 800 HD |
+| Brightness | 500 nits |
+| Speakers | 2 × 1W stereo |
+| WiFi | Yes (streaming) |
+| Bluetooth | Yes (audio out) |
+| Storage | 16GB |
+| Inputs | Streaming, Camera, Games, USB |
+
+**TV Features**:
+| Feature | Description |
+|---------|-------------|
+| Streaming | YouTube, Netflix, Disney+ |
+| Camera View | Live feeds from all vehicle cameras |
+| Games | Built-in casual games |
+| Media Player | Play videos from USB/SD |
+| Phone Mirror | Cast phone screen to TV |
+| Picture-in-Picture | Watch TV while seeing camera |
+
+**Voice Commands for TV**:
+- "TV on" / "TV off" - Power control
+- "Watch YouTube" / "Play Netflix" - Start streaming
+- "Show front camera" - Vehicle camera feed
+- "Play games" - Open game menu
+- "Volume up" / "Volume down" - Adjust volume
+- "Brightness up" / "Brightness down" - Adjust brightness
+- "Mirror my phone" - Screen mirroring
+- "What's on TV?" - Current content info
+
+**TV Screen Configuration**:
+```yaml
+tv_screen:
+  enabled: true
+  location: above_icee_machine
+  display:
+    size_inches: 7
+    resolution: "1280x800"
+    brightness_nits: 500
+    auto_brightness: true
+  audio:
+    speakers: stereo
+    power_watts: 2
+    bluetooth_out: true
+  connectivity:
+    wifi: true
+    bluetooth: true
+    hdmi_in: true
+    usb: true
+    sd_card: true
+  streaming:
+    apps:
+      - youtube
+      - netflix
+      - disney_plus
+      - spotify
+    require_wifi: true
+  camera_feeds:
+    - front_camera
+    - rear_camera
+    - clone_cameras
+    - drone_view
+  games:
+    - racing
+    - puzzle
+    - trivia
+    - arcade
+  storage_gb: 16
+  power:
+    auto_off_minutes: 30
+    screensaver_minutes: 5
+```
+
+**Entertainment Setup**:
+```
+    ┌─────────────────┐
+    │    📺 TV        │  ← 7" HD Screen
+    │   (7 inch)      │
+    ├─────────────────┤
+    │  🧊 ICEE        │  ← Slushie Dispenser
+    │   Machine       │
+    │  🔴🔵🟣🟢🟤    │  ← 6 Flavors
+    └─────────────────┘
 ```
 
 ---
